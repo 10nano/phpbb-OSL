@@ -1,0 +1,211 @@
+/* OSL - consistent appearance, independent of the selected phpBB style.
+   All rules are scoped to OSL-specific classes and IDs. */
+
+/* Standings tables and result details displayed within the topic */
+.osl-standings,
+.osl-post-results {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    margin: 12px 0 18px;
+    padding: 14px;
+    background: #f5f5f5 !important;
+    color: #101010 !important;
+    border: 1px solid #333 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 14px !important;
+    line-height: 1.35 !important;
+}
+.osl-standings *,
+.osl-post-results * {
+    box-sizing: border-box;
+}
+.osl-standings .osl-standings-inner,
+.osl-post-results .osl-post-results-inner {
+    margin: 0;
+    padding: 0;
+    background: transparent !important;
+    color: #101010 !important;
+}
+.osl-standings h3,
+.osl-standings h4,
+.osl-post-results h4 {
+    display: block;
+    color: #090909 !important;
+    background: transparent !important;
+    border: none !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+    text-align: left !important;
+    text-shadow: none !important;
+}
+.osl-standings h3 { font-size: 18px !important; margin: 0 0 12px !important; }
+.osl-standings h4 { font-size: 15px !important; margin: 14px 0 8px !important; }
+.osl-post-results h4 { font-size: 15px !important; margin: 0 0 10px !important; }
+.osl-post-results p {
+    color: #101010 !important;
+    background: transparent !important;
+    margin: 8px 0;
+    line-height: 1.45 !important;
+}
+.osl-standings .osl-results-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin: 0 0 18px;
+    -webkit-overflow-scrolling: touch;
+}
+.osl-standings table.osl-results-table {
+    display: table;
+    width: max-content;
+    min-width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #fff !important;
+    color: #090909 !important;
+    border: 1px solid #181818 !important;
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
+    table-layout: auto;
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 14px !important;
+    line-height: 1.3 !important;
+}
+.osl-standings table.osl-results-table th,
+.osl-standings table.osl-results-table td {
+    box-sizing: border-box;
+    display: table-cell;
+    white-space: nowrap;
+    text-align: center !important;
+    vertical-align: middle !important;
+    padding: 7px 10px !important;
+    margin: 0 !important;
+    border: 1px solid #202020 !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 14px !important;
+    line-height: 1.3 !important;
+    font-weight: 700 !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+}
+.osl-standings table.osl-results-table thead th {
+    background: #080808 !important;
+    color: #fff !important;
+}
+.osl-standings table.osl-results-table tbody tr:nth-child(odd) > td {
+    background: #d4d4d4 !important;
+    color: #080808 !important;
+}
+.osl-standings table.osl-results-table tbody tr:nth-child(even) > td {
+    background: #f1f1f1 !important;
+    color: #080808 !important;
+}
+.osl-standings table.osl-results-table tbody tr:hover > td {
+    background: #bdbdbd !important;
+    color: #080808 !important;
+}
+.osl-standings table.osl-results-table td.osl-col-nick a,
+.osl-standings table.osl-results-table td.osl-col-nick a > span,
+.osl-post-results a,
+.osl-post-results a > span {
+    color: #080808 !important;
+    font-weight: 700 !important;
+    text-decoration: none;
+}
+.osl-standings table.osl-results-table td.osl-col-nick a:hover,
+.osl-post-results a:hover {
+    text-decoration: underline !important;
+}
+.osl-standings table.osl-results-table .osl-col-rank { min-width: 65px; }
+.osl-standings table.osl-results-table .osl-col-group { min-width: 75px; }
+.osl-standings table.osl-results-table .osl-col-nick { min-width: 125px; }
+.osl-standings table.osl-results-table .osl-col-round { min-width: 55px; }
+.osl-standings table.osl-results-table .osl-col-summary { min-width: 65px; }
+
+/* League configuration and result forms use the OSL color palette.
+   Keep phpBB tab layout and JavaScript classes unchanged. */
+#osl-league-panel,
+#osl-result-panel {
+    background: #f5f5f5 !important;
+    color: #101010 !important;
+    border: 1px solid #333 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    padding: 12px;
+}
+#osl-league-panel .inner,
+#osl-result-panel .inner {
+    color: #101010 !important;
+    background: transparent !important;
+}
+#osl-league-panel h3,
+#osl-result-panel h3,
+#osl-league-panel h4,
+#osl-result-panel h4,
+#osl-league-panel p,
+#osl-result-panel p,
+#osl-league-panel label,
+#osl-result-panel label,
+#osl-league-panel dt,
+#osl-result-panel dt,
+#osl-league-panel dd,
+#osl-result-panel dd {
+    color: #101010 !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    text-shadow: none !important;
+}
+#osl-league-panel .osl-competition,
+#osl-result-panel .osl-result-competition {
+    background: #e4e4e4 !important;
+    color: #101010 !important;
+    border: 1px solid #555 !important;
+    border-radius: 0 !important;
+}
+#osl-league-panel input:not([type="checkbox"]):not([type="hidden"]),
+#osl-result-panel input:not([type="checkbox"]):not([type="hidden"]),
+#osl-league-panel select,
+#osl-result-panel select {
+    background: #fff !important;
+    color: #101010 !important;
+    border: 1px solid #555 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+}
+#osl-league-panel button,
+#osl-result-panel button {
+    background: #222 !important;
+    color: #fff !important;
+    border: 1px solid #111 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    cursor: pointer;
+}
+#osl-league-panel button:hover,
+#osl-result-panel button:hover {
+    background: #555 !important;
+    color: #fff !important;
+}
+
+/* Forum-specific league creator management */
+.osl-creators-link { font-size: 0.6em; margin-left: 0.75em; font-weight: normal; }
+.osl-creator-admin { max-width: 850px; margin: 18px 0; padding: 20px; border: 1px solid #444; background: #f4f4f4; color: #111; font: 14px/1.5 Arial, sans-serif; }
+.osl-creator-admin h2, .osl-creator-admin h3 { color: #111; background: transparent; margin: 12px 0; }
+.osl-creator-admin form { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
+.osl-creator-admin input { color: #111; background: #fff; padding: 6px; border: 1px solid #555; }
+.osl-creator-admin button { cursor: pointer; padding: 6px 12px; color: #fff; background: #222; border: 1px solid #111; }
+.osl-creator-admin table { border-collapse: collapse; width: 100%; }
+.osl-creator-admin th { background: #151515; color: #fff; text-align: left; }
+.osl-creator-admin td { background: #e3e3e3; color: #111; }
+.osl-creator-admin th, .osl-creator-admin td { padding: 8px; border: 1px solid #555; }
+.osl-creator-admin .osl-creator-success { color: #104e24; font-weight: bold; }
+.osl-creator-admin .osl-creator-errors { color: #a00000; font-weight: bold; }
+.osl-creator-admin .osl-creators-note { margin-top: 20px; font-size: 12px; }

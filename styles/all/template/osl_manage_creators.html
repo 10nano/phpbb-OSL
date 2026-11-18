@@ -1,0 +1,52 @@
+<!-- INCLUDE overall_header.html -->
+
+<div class="osl-creator-admin">
+    <h2>{L_OSL_CREATORS_TITLE}: {OSL_CREATORS_FORUM}</h2>
+    <p>{L_OSL_CREATORS_EXPLAIN}</p>
+
+    <!-- IF OSL_CREATORS_SUCCESS -->
+    <p class="osl-creator-success">{OSL_CREATORS_SUCCESS}</p>
+    <!-- ENDIF -->
+    <!-- IF .osl_errors -->
+    <ul class="osl-creator-errors">
+        <!-- BEGIN osl_errors -->
+        <li>{osl_errors.TEXT}</li>
+        <!-- END osl_errors -->
+    </ul>
+    <!-- ENDIF -->
+
+    <h3>{L_OSL_CREATORS_ADD}</h3>
+    <form action="{U_OSL_CREATORS_FORM}" method="post">
+        <label for="osl-creator-username">{L_USERNAME}:</label>
+        <input type="text" id="osl-creator-username" name="osl_username" value="{OSL_CREATORS_USERNAME}" size="32" maxlength="255" autocomplete="off" required>
+        <button type="submit" name="osl_action" value="grant">{L_OSL_CREATORS_GRANT}</button>
+        {S_FORM_TOKEN}
+    </form>
+
+    <h3>{L_OSL_CREATORS_ASSIGNED}</h3>
+    <!-- IF .osl_creators -->
+    <table>
+        <thead><tr><th>{L_USERNAME}</th><th>{L_ACTION}</th></tr></thead>
+        <tbody>
+            <!-- BEGIN osl_creators -->
+            <tr>
+                <td>{osl_creators.USERNAME}</td>
+                <td>
+                    <form action="{U_OSL_CREATORS_FORM}" method="post">
+                        <input type="hidden" name="osl_user_id" value="{osl_creators.USER_ID}">
+                        <button type="submit" name="osl_action" value="revoke">{L_OSL_CREATORS_REVOKE}</button>
+                        {S_FORM_TOKEN}
+                    </form>
+                </td>
+            </tr>
+            <!-- END osl_creators -->
+        </tbody>
+    </table>
+    <!-- ELSE -->
+    <p>{L_OSL_CREATORS_EMPTY}</p>
+    <!-- ENDIF -->
+
+    <p class="osl-creators-back"><a href="{U_OSL_CREATORS_BACK}">{L_OSL_CREATORS_BACK}</a></p>
+</div>
+
+<!-- INCLUDE overall_footer.html -->

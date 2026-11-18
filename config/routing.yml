@@ -1,0 +1,5 @@
+tennano_osl_manage_creators:
+    path: /osl/creators/{forum_id}
+    defaults: { _controller: tennano.osl.creator_controller:handle }
+    requirements:
+        forum_id: "\\d+"

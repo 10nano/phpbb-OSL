@@ -1,0 +1,83 @@
+<?php
+
+if (!defined('IN_PHPBB'))
+{
+	exit;
+}
+
+if (empty($lang) || !is_array($lang))
+{
+	$lang = [];
+}
+
+$lang = array_merge($lang, [
+	'OSL_TAB_LEAGUE'           => 'Shooting League',
+	'OSL_TAB_RESULT'           => 'Match Results',
+	'OSL_ENABLE_LEAGUE'        => 'Create a shooting league in this topic',
+	'OSL_TITLE'                => 'League title',
+	'OSL_SHORT_NAME'           => 'League short name',
+	'OSL_START_DATE'           => 'Start date (1st round)',
+	'OSL_DURATION_MONTHS'      => 'Duration (months)',
+	'OSL_BEST_ROUNDS'          => 'Number of best starts counted towards total',
+	'OSL_GROUPS_ENABLED'       => 'Show an optional Group / Club column in standings',
+	'OSL_FIELDS_SCHEMA'        => 'Scoring fields for this discipline',
+	'OSL_FIELD_NAME'           => 'Field name (e.g. Chickens)',
+	'OSL_FIELD_MIN'            => 'Min. pts',
+	'OSL_FIELD_MAX'            => 'Max. pts',
+	'OSL_ADD_FIELD'            => '+ Add another field',
+	'OSL_ERR_NO_TITLE'         => 'You must enter a shooting league title.',
+	'OSL_ERR_NO_FIELDS'        => 'You must define at least one scoring field.',
+	'OSL_ERR_INVALID_RANGE'    => 'Minimum value cannot be greater than maximum value.',
+	'OSL_SUBMIT_RESULT'        => 'Submit / update league result',
+	'OSL_RESULT_DATE'          => 'Match date (shooting date)',
+	'OSL_RESULT_GROUP'         => 'Group / Club (optional)',
+	'OSL_GROUP_HELP'           => 'One name shared across disciplines in this league. It is remembered for future submissions and can be changed or cleared.',
+	'OSL_ERR_GROUP_LENGTH'     => 'Group/club name cannot exceed 100 characters.',
+	'OSL_ERR_DATE_OUT_OF_RANGE'=> 'The selected date is outside the league duration.',
+	'OSL_ERR_DUPLICATE_PERIOD' => 'This shooter already submitted a score for this discipline and round.',
+	'OSL_ERR_SCORE_RANGE'      => 'Score for "%1$s" must be between %2$s and %3$s.',
+	'OSL_COL_RANK'             => 'Rank',
+	'OSL_COL_GROUP'            => 'Group',
+	'OSL_COL_NICK'             => 'Nickname',
+	'OSL_COL_TOTAL'            => 'Total',
+	'OSL_COL_TOTAL_BEST'       => 'Total (%1$d of %2$d)',
+	'OSL_COL_TOTAL_ALL'        => 'Grand Total',
+	'OSL_COL_STARTS'           => 'Starts',
+	'OSL_COL_AVG'              => 'Average',
+	'OSL_NO_RESULTS'           => 'No scores submitted for this discipline yet.',
+	'OSL_POST_RESULT_HEADER'   => 'Official league result',
+
+    'OSL_COMPETITIONS' => 'Disciplines',
+    'OSL_COMPETITIONS_HELP' => 'Each discipline has its own scoring fields and rankings.',
+    'OSL_COMPETITION_NAME' => 'Discipline name (e.g. Rifle results)',
+    'OSL_ADD_COMPETITION' => '+ Add discipline',
+    'OSL_REMOVE_COMPETITION' => 'Remove discipline',
+    'OSL_REMOVE_FIELD' => 'Remove field',
+    'OSL_COMPETITION_LOCK_HELP' => 'Once scores are recorded, scoring fields cannot be changed and the discipline cannot be removed.',
+    'OSL_RESULTS_HELP' => 'Select only disciplines you want to submit. You may submit missing disciplines later in another reply. Each has its own date.',
+    'OSL_ERR_DUPLICATE_COMPETITION' => 'Discipline names must be unique within the league.',
+    'OSL_ERR_NO_COMPETITIONS' => 'Add at least one discipline.',
+    'OSL_ERR_DUPLICATE_FIELD' => 'Field names must be unique within a discipline.',
+    'OSL_ERR_INVALID_COMPETITION' => 'Invalid discipline selected.',
+    'OSL_ERR_COMPETITION_LOCKED' => 'You cannot delete a discipline or change its scoring fields after recording results.',
+    'OSL_ERR_SCHEDULE_LOCKED' => 'You cannot change the league dates after recording results.',
+    'OSL_ERR_GROUPS_LOCKED' => 'You cannot change the Group column setting after recording results.',
+    'OSL_ERR_DISABLE' => 'An existing league cannot be disabled via this checkbox.',
+    'OSL_ERR_PERMISSION' => 'You do not have permission for this operation.',
+    'OSL_ERR_DATE_INVALID' => 'Enter a valid league start date.',
+    'OSL_ERR_LIMITS' => 'Duration must be 1–24 months; best starts must be between 0 and duration.',
+    'OSL_CREATORS_MANAGE' => 'Manage league creators',
+    'OSL_CREATORS_TITLE' => 'League creation permissions',
+    'OSL_CREATORS_EXPLAIN' => 'No one can create leagues by default, including administrators and moderators. Grant access to any user, including yourself, for this forum only. Standard permission to create topics is also required.',
+    'OSL_CREATORS_ADD' => 'Grant a user access',
+    'OSL_CREATORS_GRANT' => 'Grant access',
+    'OSL_CREATORS_ASSIGNED' => 'Users with access in this forum',
+    'OSL_CREATORS_REVOKE' => 'Revoke access',
+    'OSL_CREATORS_EMPTY' => 'No local grants in this forum.',
+    'OSL_CREATORS_BACK' => 'Back to forum',
+    'OSL_CREATORS_NO_USERNAME' => 'Enter a username.',
+    'OSL_CREATORS_UNKNOWN_USER' => 'No active account was found under that name.',
+    'OSL_CREATORS_GRANTED' => 'Permission was granted.',
+    'OSL_CREATORS_REVOKED' => 'Permission was revoked.',
+    'OSL_CREATORS_NOT_ASSIGNED' => 'No matching permission grant was found.',
+]);

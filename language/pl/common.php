@@ -1,0 +1,83 @@
+<?php
+
+if (!defined('IN_PHPBB'))
+{
+	exit;
+}
+
+if (empty($lang) || !is_array($lang))
+{
+	$lang = [];
+}
+
+$lang = array_merge($lang, [
+	'OSL_TAB_LEAGUE'           => 'Liga Strzelecka',
+	'OSL_TAB_RESULT'           => 'Wyniki Zawodów',
+	'OSL_ENABLE_LEAGUE'        => 'Utwórz ligę strzelecką w tym temacie',
+	'OSL_TITLE'                => 'Tytuł ligi',
+	'OSL_SHORT_NAME'           => 'Skrót ligi',
+	'OSL_START_DATE'           => 'Data rozpoczęcia (1. runda)',
+	'OSL_DURATION_MONTHS'      => 'Czas trwania (miesiące)',
+	'OSL_BEST_ROUNDS'          => 'Liczba najlepszych startów do sumy',
+	'OSL_GROUPS_ENABLED'       => 'Wyświetlaj opcjonalną kolumnę „Grupa” (klub zawodnika) w tabelach wyników',
+	'OSL_FIELDS_SCHEMA'        => 'Pola punktacji w tej konkurencji',
+	'OSL_FIELD_NAME'           => 'Nazwa pola (np. Kurczaki)',
+	'OSL_FIELD_MIN'            => 'Min. pkt',
+	'OSL_FIELD_MAX'            => 'Max. pkt',
+	'OSL_ADD_FIELD'            => '+ Dodaj kolejną formatkę',
+	'OSL_ERR_NO_TITLE'         => 'Musisz podać tytuł ligi strzeleckiej.',
+	'OSL_ERR_NO_FIELDS'        => 'Musisz zdefiniować przynajmniej jedną formatkę punktową.',
+	'OSL_ERR_INVALID_RANGE'    => 'Wartość minimalna nie może być większa od maksymalnej.',
+	'OSL_SUBMIT_RESULT'        => 'Dodaj / zaktualizuj wynik w lidze',
+	'OSL_RESULT_DATE'          => 'Termin zawodów (data strzelania)',
+	'OSL_RESULT_GROUP'         => 'Grupa / Klub (opcjonalnie)',
+	'OSL_GROUP_HELP'           => 'Jedna nazwa dla wszystkich konkurencji w tej lidze. Przy następnym zgłoszeniu zostanie uzupełniona automatycznie; możesz ją zmienić lub wyczyścić.',
+	'OSL_ERR_GROUP_LENGTH'     => 'Nazwa grupy/klubu może mieć maksymalnie 100 znaków.',
+	'OSL_ERR_DATE_OUT_OF_RANGE'=> 'Wybrana data nie mieści się w okresie trwania ligi.',
+	'OSL_ERR_DUPLICATE_PERIOD' => 'Ten zawodnik zgłosił już wynik w tej konkurencji i rundzie (miesiącu).',
+	'OSL_ERR_SCORE_RANGE'      => 'Wynik dla pola „%1$s” musi mieścić się w przedziale od %2$s do %3$s.',
+	'OSL_COL_RANK'             => 'Miejsce',
+	'OSL_COL_GROUP'            => 'Grupa',
+	'OSL_COL_NICK'             => 'Nick',
+	'OSL_COL_TOTAL'            => 'Suma',
+	'OSL_COL_TOTAL_BEST'       => 'Suma (%1$dz%2$d)',
+	'OSL_COL_TOTAL_ALL'        => 'Suma całk.',
+	'OSL_COL_STARTS'           => 'Starty',
+	'OSL_COL_AVG'              => 'Średnia',
+	'OSL_NO_RESULTS'           => 'Brak zgłoszonych wyników w tej konkurencji.',
+	'OSL_POST_RESULT_HEADER'   => 'Oficjalny wynik ligowy',
+
+    'OSL_COMPETITIONS' => 'Konkurencje',
+    'OSL_COMPETITIONS_HELP' => 'Każda konkurencja ma własne pola punktacji i osobną tabelę wyników.',
+    'OSL_COMPETITION_NAME' => 'Nazwa konkurencji (np. Wyniki karabin)',
+    'OSL_ADD_COMPETITION' => '+ Dodaj konkurencję',
+    'OSL_REMOVE_COMPETITION' => 'Usuń konkurencję',
+    'OSL_REMOVE_FIELD' => 'Usuń pole',
+    'OSL_COMPETITION_LOCK_HELP' => 'Po zapisaniu wyników nie można zmieniać pól danej konkurencji ani jej usuwać. Nazwę można poprawić.',
+    'OSL_RESULTS_HELP' => 'Zaznacz konkurencje, dla których chcesz zapisać wynik. Pozostałe pozostaw niezaznaczone; do każdej można wrócić w nowej odpowiedzi. Każda ma własną datę.',
+    'OSL_ERR_DUPLICATE_COMPETITION' => 'Nazwy konkurencji w jednej lidze muszą być różne.',
+    'OSL_ERR_NO_COMPETITIONS' => 'Dodaj przynajmniej jedną konkurencję.',
+    'OSL_ERR_DUPLICATE_FIELD' => 'Nazwy pól w jednej konkurencji muszą być różne.',
+    'OSL_ERR_INVALID_COMPETITION' => 'Wybrano nieprawidłową konkurencję.',
+    'OSL_ERR_COMPETITION_LOCKED' => 'Nie można usunąć konkurencji ani zmienić jej pól, jeśli ma już zapisane wyniki.',
+    'OSL_ERR_SCHEDULE_LOCKED' => 'Nie można zmienić początku ani czasu trwania ligi po zapisaniu wyników.',
+    'OSL_ERR_GROUPS_LOCKED' => 'Nie można zmienić ustawienia kolumny Grupa po zapisaniu wyników.',
+    'OSL_ERR_DISABLE' => 'Istniejącej ligi nie można wyłączyć odznaczeniem tego pola.',
+    'OSL_ERR_PERMISSION' => 'Brak uprawnień do tej operacji.',
+    'OSL_ERR_DATE_INVALID' => 'Podaj prawidłową datę rozpoczęcia ligi.',
+    'OSL_ERR_LIMITS' => 'Czas trwania musi mieścić się w zakresie 1–24 miesięcy, a liczba najlepszych startów od 0 do czasu trwania ligi.',
+    'OSL_CREATORS_MANAGE' => 'Zarządzaj twórcami lig',
+    'OSL_CREATORS_TITLE' => 'Uprawnienia tworzenia lig',
+    'OSL_CREATORS_EXPLAIN' => 'Administratorzy i moderatorzy nie mogą domyślnie tworzyć lig. Tu możesz nadać prawo dowolnemu użytkownikowi, również sobie. Uprawnienie działa tylko w tym forum i wymaga także zwykłego prawa do zakładania tematów.',
+    'OSL_CREATORS_ADD' => 'Przyznaj uprawnienie użytkownikowi',
+    'OSL_CREATORS_GRANT' => 'Nadaj uprawnienie',
+    'OSL_CREATORS_ASSIGNED' => 'Użytkownicy z uprawnieniem w tym forum',
+    'OSL_CREATORS_REVOKE' => 'Cofnij uprawnienie',
+    'OSL_CREATORS_EMPTY' => 'Brak indywidualnych przydziałów w tym forum.',
+    'OSL_CREATORS_BACK' => 'Powrót do forum',
+    'OSL_CREATORS_NO_USERNAME' => 'Wpisz nazwę użytkownika.',
+    'OSL_CREATORS_UNKNOWN_USER' => 'Nie znaleziono aktywnego konta o tej nazwie.',
+    'OSL_CREATORS_GRANTED' => 'Przydział został zapisany.',
+    'OSL_CREATORS_REVOKED' => 'Przydział został cofnięty.',
+    'OSL_CREATORS_NOT_ASSIGNED' => 'Nie znaleziono przydziału do cofnięcia.',
+]);
