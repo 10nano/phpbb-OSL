@@ -316,3 +316,21 @@
 .osl-creator-admin .osl-creator-success { color: #104e24; font-weight: bold; }
 .osl-creator-admin .osl-creator-errors { color: #a00000; font-weight: bold; }
 .osl-creator-admin .osl-creators-note { margin-top: 20px; font-size: 12px; }
+
+
+.osl-creator-admin .osl-creators-back { margin-top: 14px; }
+.osl-creator-admin .osl-creator-back-button {
+    display: inline-block;
+    padding: 7px 12px;
+    color: #fff !important;
+    background: #222 !important;
+    border: 1px solid #111 !important;
+    text-decoration: none !important;
+    font-weight: 700 !important;
+}
+.osl-creator-admin .osl-creator-back-button:hover,
+.osl-creator-admin .osl-creator-back-button:focus {
+    color: #fff !important;
+    background: #555 !important;
+    text-decoration: none !important;
+}
