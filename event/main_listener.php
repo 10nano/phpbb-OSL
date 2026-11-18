@@ -255,7 +255,7 @@ class main_listener implements EventSubscriberInterface
                 'OSL_SHORT_NAME' => $this->e($this->request->variable('osl_short_name', $league['short_name'] ?? '', true)),
                 'OSL_START_DATE' => $this->e($start),
                 'OSL_DURATION_MONTHS' => $this->request->variable('osl_duration_months', (int) ($league['duration_months'] ?? 12)),
-                'OSL_BEST_ROUNDS' => $this->request->variable('osl_best_rounds', (int) ($league['best_rounds_count'] ?? 12)),
+                'OSL_BEST_ROUNDS' => $this->request->variable('osl_best_rounds', (int) ($league['best_rounds_count'] ?? 8)),
                 'OSL_GROUPS_ENABLED' => $this->request->is_set_post('osl_form_league')
                     ? $this->request->is_set_post('osl_groups_enabled')
                     : (bool) ($league['groups_enabled'] ?? false),
@@ -274,7 +274,7 @@ class main_listener implements EventSubscriberInterface
             }
             if (!$definitions)
             {
-                $definitions = [['id' => 0, 'name' => 'Results', 'fields_schema' => [['name' => 'Score', 'min' => 0, 'max' => 40]]]];
+                $definitions = [['id' => 0, 'name' => $this->language->lang('OSL_DEFAULT_COMPETITION_NAME'), 'fields_schema' => [['name' => $this->language->lang('OSL_DEFAULT_FIELD_NAME'), 'min' => 0, 'max' => 40]]]];
             }
             foreach ($definitions as $slot => $comp)
             {
@@ -386,7 +386,7 @@ class main_listener implements EventSubscriberInterface
                     $errors[] = $this->language->lang('OSL_ERR_DATE_INVALID');
                 }
                 $duration = $this->request->variable('osl_duration_months', 12);
-                $best = $this->request->variable('osl_best_rounds', 12);
+                $best = $this->request->variable('osl_best_rounds', 8);
                 if ($duration < 1 || $duration > 24 || $best < 0 || $best > $duration)
                 {
                     $errors[] = $this->language->lang('OSL_ERR_LIMITS');
@@ -576,7 +576,7 @@ class main_listener implements EventSubscriberInterface
                 'short_name' => $this->request->variable('osl_short_name', '', true),
                 'start_date' => $this->parse_date($this->request->variable('osl_start_date', '')),
                 'duration_months' => $this->request->variable('osl_duration_months', 12),
-                'best_rounds_count' => $this->request->variable('osl_best_rounds', 12),
+                'best_rounds_count' => $this->request->variable('osl_best_rounds', 8),
                 'groups_enabled' => json_encode($this->request->is_set_post('osl_groups_enabled')),
             ];
             $this->db->sql_transaction('begin');

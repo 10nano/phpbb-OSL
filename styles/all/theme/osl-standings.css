@@ -195,6 +195,113 @@
     color: #fff !important;
 }
 
+#osl-league-panel button:disabled,
+#osl-result-panel button:disabled,
+#osl-league-panel button.osl-button-disabled,
+#osl-result-panel button.osl-button-disabled {
+    background: #b6b6b6 !important;
+    color: #efefef !important;
+    border-color: #8a8a8a !important;
+    cursor: not-allowed !important;
+    opacity: 1 !important;
+}
+#osl-league-panel button:disabled:hover,
+#osl-result-panel button:disabled:hover,
+#osl-league-panel button.osl-button-disabled:hover,
+#osl-result-panel button.osl-button-disabled:hover {
+    background: #b6b6b6 !important;
+    color: #efefef !important;
+}
+
+/* Hide remove controls while their target is the only remaining item.
+   The form script manages the disabled state after each add/remove action. */
+#osl-league-panel button.osl-remove-competition:disabled,
+#osl-league-panel button.osl-remove-field:disabled {
+    display: none !important;
+}
+
+/* Self-contained responsive layout for the league-creation form. */
+#osl-league-panel .osl-config-row,
+#osl-league-panel .osl-comp-name-row {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    column-gap: 18px;
+    align-items: center;
+    margin: 12px 0;
+}
+#osl-league-panel .osl-config-row > label,
+#osl-league-panel .osl-comp-name-row > label {
+    font-weight: 700;
+    line-height: 1.3;
+}
+#osl-league-panel .osl-comp-name-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: 0;
+}
+#osl-league-panel .osl-comp-name-controls .osl-form-input-comp-name {
+    flex: 0 1 300px;
+    min-width: 0;
+}
+#osl-league-panel .osl-enable-label {
+    display: inline-flex;
+    gap: 12px;
+    align-items: center;
+    justify-self: start;
+    cursor: pointer;
+}
+#osl-league-panel .osl-config-row > input[type="checkbox"] {
+    justify-self: start;
+}
+#osl-league-panel .osl-form-input {
+    box-sizing: border-box;
+    margin: 0;
+    min-height: 26px;
+    max-width: 100%;
+    padding: 3px 5px;
+}
+#osl-league-panel .osl-form-input-title { width: 410px; }
+#osl-league-panel .osl-form-input-short { width: 190px; }
+#osl-league-panel .osl-form-input-date { width: 150px; }
+#osl-league-panel .osl-form-input-number { width: 80px; }
+#osl-league-panel .osl-form-input-comp-name { width: 300px; }
+#osl-league-panel .osl-form-input-field-name { width: 205px; }
+#osl-league-panel .osl-form-input-range { width: 95px; }
+#osl-league-panel .osl-competition {
+    padding: 16px;
+    margin: 12px 0;
+}
+#osl-league-panel .osl-field-row,
+#osl-league-panel .osl-competition-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 10px 0;
+}
+#osl-league-panel .osl-field-row > label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+#osl-league-panel .osl-competition-actions { margin-top: 14px; }
+#osl-league-panel button {
+    padding: 5px 9px;
+    font-weight: 700;
+    font-size: 13px;
+}
+@media (max-width: 700px) {
+    #osl-league-panel .osl-config-row,
+    #osl-league-panel .osl-comp-name-row {
+        grid-template-columns: minmax(0, 1fr);
+        row-gap: 5px;
+    }
+    #osl-league-panel .osl-config-label-spacer { display: none; }
+}
+
 /* Forum-specific league creator management */
 .osl-creators-link { font-size: 0.6em; margin-left: 0.75em; font-weight: normal; }
 .osl-creator-admin { max-width: 850px; margin: 18px 0; padding: 20px; border: 1px solid #444; background: #f4f4f4; color: #111; font: 14px/1.5 Arial, sans-serif; }

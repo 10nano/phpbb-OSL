@@ -3,40 +3,66 @@
     <div class="inner">
         <fieldset class="fields2">
             <input type="hidden" name="osl_form_league" value="1" />
-            <dl>
-                <dt><label for="osl_enabled">{L_OSL_ENABLE_LEAGUE}</label></dt>
-                <dd><input type="checkbox" name="osl_enabled" id="osl_enabled" value="1"<!-- IF OSL_ENABLED --> checked="checked"<!-- ENDIF --> /></dd>
-            </dl>
+            <div class="osl-config-row osl-config-enable">
+                <span class="osl-config-label-spacer"></span>
+                <label for="osl_enabled" class="osl-enable-label">
+                    <input type="checkbox" name="osl_enabled" id="osl_enabled" value="1"<!-- IF OSL_ENABLED --> checked="checked"<!-- ENDIF --> />
+                    {L_OSL_ENABLE_LEAGUE}
+                </label>
+            </div>
             <div id="osl-league-settings"<!-- IF not OSL_ENABLED --> style="display:none"<!-- ENDIF -->>
-                <dl><dt><label for="osl_title">{L_OSL_TITLE}</label></dt><dd><input class="inputbox autowidth" type="text" id="osl_title" name="osl_title" value="{OSL_TITLE}" size="50" maxlength="255" /></dd></dl>
-                <dl><dt><label for="osl_short_name">{L_OSL_SHORT_NAME}</label></dt><dd><input class="inputbox autowidth" type="text" id="osl_short_name" name="osl_short_name" value="{OSL_SHORT_NAME}" size="20" maxlength="50" /></dd></dl>
-                <dl><dt><label for="osl_start_date">{L_OSL_START_DATE}</label></dt><dd><input class="inputbox autowidth" type="date" id="osl_start_date" name="osl_start_date" value="{OSL_START_DATE}" /></dd></dl>
-                <dl><dt><label for="osl_duration_months">{L_OSL_DURATION_MONTHS}</label></dt><dd><input class="inputbox autowidth" type="number" id="osl_duration_months" name="osl_duration_months" min="1" max="24" value="{OSL_DURATION_MONTHS}" /></dd></dl>
-                <dl><dt><label for="osl_best_rounds">{L_OSL_BEST_ROUNDS}</label></dt><dd><input class="inputbox autowidth" type="number" id="osl_best_rounds" name="osl_best_rounds" min="0" max="24" value="{OSL_BEST_ROUNDS}" /></dd></dl>
-                <dl><dt><label for="osl_groups_enabled">{L_OSL_GROUPS_ENABLED}</label></dt><dd><input type="checkbox" id="osl_groups_enabled" name="osl_groups_enabled" value="1"<!-- IF OSL_GROUPS_ENABLED --> checked="checked"<!-- ENDIF --> /></dd></dl>
+                <div class="osl-config-row">
+                    <label for="osl_title">{L_OSL_TITLE}</label>
+                    <input class="inputbox osl-form-input osl-form-input-title" type="text" id="osl_title" name="osl_title" value="{OSL_TITLE}" maxlength="255" />
+                </div>
+                <div class="osl-config-row">
+                    <label for="osl_short_name">{L_OSL_SHORT_NAME}</label>
+                    <input class="inputbox osl-form-input osl-form-input-short" type="text" id="osl_short_name" name="osl_short_name" value="{OSL_SHORT_NAME}" maxlength="50" />
+                </div>
+                <div class="osl-config-row">
+                    <label for="osl_start_date">{L_OSL_START_DATE}</label>
+                    <input class="inputbox osl-form-input osl-form-input-date" type="date" id="osl_start_date" name="osl_start_date" value="{OSL_START_DATE}" />
+                </div>
+                <div class="osl-config-row">
+                    <label for="osl_duration_months">{L_OSL_DURATION_MONTHS}</label>
+                    <input class="inputbox osl-form-input osl-form-input-number" type="number" id="osl_duration_months" name="osl_duration_months" min="1" max="24" value="{OSL_DURATION_MONTHS}" />
+                </div>
+                <div class="osl-config-row">
+                    <label for="osl_best_rounds">{L_OSL_BEST_ROUNDS}</label>
+                    <input class="inputbox osl-form-input osl-form-input-number" type="number" id="osl_best_rounds" name="osl_best_rounds" min="0" max="24" value="{OSL_BEST_ROUNDS}" />
+                </div>
+                <div class="osl-config-row">
+                    <label for="osl_groups_enabled">{L_OSL_GROUPS_ENABLED}</label>
+                    <input type="checkbox" id="osl_groups_enabled" name="osl_groups_enabled" value="1"<!-- IF OSL_GROUPS_ENABLED --> checked="checked"<!-- ENDIF --> />
+                </div>
                 <hr />
                 <h3>{L_OSL_COMPETITIONS}</h3>
                 <p>{L_OSL_COMPETITIONS_HELP}</p>
                 <div id="osl-competitions-container">
                     <!-- BEGIN osl_competitions -->
-                    <div class="osl-competition panel bg2" data-osl-comp="{osl_competitions.INDEX}" style="padding:12px;margin:12px 0">
+                    <div class="osl-competition panel bg2" data-osl-comp="{osl_competitions.INDEX}">
                         <input type="hidden" name="osl_comp_id[{osl_competitions.INDEX}]" value="{osl_competitions.ID}" />
-                        <dl>
-                            <dt><label>{L_OSL_COMPETITION_NAME}</label></dt>
-                            <dd><input class="inputbox autowidth" type="text" name="osl_comp_name[{osl_competitions.INDEX}]" value="{osl_competitions.NAME}" size="35" maxlength="255" /></dd>
-                        </dl>
+                        <div class="osl-comp-name-row">
+                            <label for="osl_comp_name_{osl_competitions.INDEX}">{L_OSL_COMPETITION_NAME}</label>
+                            <div class="osl-comp-name-controls">
+                                <input class="inputbox osl-form-input osl-form-input-comp-name" type="text" id="osl_comp_name_{osl_competitions.INDEX}" name="osl_comp_name[{osl_competitions.INDEX}]" value="{osl_competitions.NAME}" maxlength="255" />
+                                <button type="button" class="button2 osl-remove-competition">{L_OSL_REMOVE_COMPETITION}</button>
+                            </div>
+                        </div>
                         <strong>{L_OSL_FIELDS_SCHEMA}</strong>
                         <div class="osl-comp-fields">
                             <!-- BEGIN osl_competitions.fields -->
-                            <div class="osl-field-row" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0">
-                                <input class="inputbox autowidth" type="text" name="osl_comp_field_name[{osl_competitions.INDEX}][{osl_competitions.fields.INDEX}]" value="{osl_competitions.fields.NAME}" size="22" placeholder="{L_OSL_FIELD_NAME}" />
-                                <label>{L_OSL_FIELD_MIN}: <input class="inputbox autowidth" style="width:75px" type="number" step="0.01" name="osl_comp_field_min[{osl_competitions.INDEX}][{osl_competitions.fields.INDEX}]" value="{osl_competitions.fields.MIN}" /></label>
-                                <label>{L_OSL_FIELD_MAX}: <input class="inputbox autowidth" style="width:75px" type="number" step="0.01" name="osl_comp_field_max[{osl_competitions.INDEX}][{osl_competitions.fields.INDEX}]" value="{osl_competitions.fields.MAX}" /></label>
+                            <div class="osl-field-row">
+                                <input class="inputbox osl-form-input osl-form-input-field-name" type="text" name="osl_comp_field_name[{osl_competitions.INDEX}][{osl_competitions.fields.INDEX}]" value="{osl_competitions.fields.NAME}" placeholder="{L_OSL_FIELD_NAME}" />
+                                <label>{L_OSL_FIELD_MIN}: <input class="inputbox osl-form-input osl-form-input-range" type="number" step="0.01" name="osl_comp_field_min[{osl_competitions.INDEX}][{osl_competitions.fields.INDEX}]" value="{osl_competitions.fields.MIN}" /></label>
+                                <label>{L_OSL_FIELD_MAX}: <input class="inputbox osl-form-input osl-form-input-range" type="number" step="0.01" name="osl_comp_field_max[{osl_competitions.INDEX}][{osl_competitions.fields.INDEX}]" value="{osl_competitions.fields.MAX}" /></label>
                                 <button type="button" class="button2 osl-remove-field" title="{L_OSL_REMOVE_FIELD}">{L_OSL_REMOVE_FIELD}</button>
                             </div>
                             <!-- END osl_competitions.fields -->
                         </div>
-                        <p><button type="button" class="button2 osl-add-field">{L_OSL_ADD_FIELD}</button> <button type="button" class="button2 osl-remove-competition">{L_OSL_REMOVE_COMPETITION}</button></p>
+                        <div class="osl-competition-actions">
+                            <button type="button" class="button2 osl-add-field">{L_OSL_ADD_FIELD}</button>
+                        </div>
                     </div>
                     <!-- END osl_competitions -->
                 </div>
@@ -46,22 +72,30 @@
         </fieldset>
     </div>
 </div>
-<!-- A template keeps dynamic HTML out of JavaScript string concatenation. -->
+<!-- Dynamic templates preserve phpBB's input naming and competition/field indexes. -->
 <template id="osl-new-field-template">
-    <div class="osl-field-row" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0">
-        <input class="inputbox autowidth" type="text" name="osl_comp_field_name[__C__][__F__]" size="22" placeholder="{L_OSL_FIELD_NAME}" />
-        <label>{L_OSL_FIELD_MIN}: <input class="inputbox autowidth" style="width:75px" type="number" step="0.01" name="osl_comp_field_min[__C__][__F__]" value="0" /></label>
-        <label>{L_OSL_FIELD_MAX}: <input class="inputbox autowidth" style="width:75px" type="number" step="0.01" name="osl_comp_field_max[__C__][__F__]" value="40" /></label>
+    <div class="osl-field-row">
+        <input class="inputbox osl-form-input osl-form-input-field-name" type="text" name="osl_comp_field_name[__C__][__F__]" placeholder="{L_OSL_FIELD_NAME}" />
+        <label>{L_OSL_FIELD_MIN}: <input class="inputbox osl-form-input osl-form-input-range" type="number" step="0.01" name="osl_comp_field_min[__C__][__F__]" value="0" /></label>
+        <label>{L_OSL_FIELD_MAX}: <input class="inputbox osl-form-input osl-form-input-range" type="number" step="0.01" name="osl_comp_field_max[__C__][__F__]" value="40" /></label>
         <button type="button" class="button2 osl-remove-field">{L_OSL_REMOVE_FIELD}</button>
     </div>
 </template>
 <template id="osl-new-competition-template">
-    <div class="osl-competition panel bg2" data-osl-comp="__C__" style="padding:12px;margin:12px 0">
+    <div class="osl-competition panel bg2" data-osl-comp="__C__">
         <input type="hidden" name="osl_comp_id[__C__]" value="0" />
-        <dl><dt><label>{L_OSL_COMPETITION_NAME}</label></dt><dd><input class="inputbox autowidth" type="text" name="osl_comp_name[__C__]" size="35" maxlength="255" /></dd></dl>
+        <div class="osl-comp-name-row">
+            <label for="osl_comp_name___C__">{L_OSL_COMPETITION_NAME}</label>
+            <div class="osl-comp-name-controls">
+                <input class="inputbox osl-form-input osl-form-input-comp-name" type="text" id="osl_comp_name___C__" name="osl_comp_name[__C__]" maxlength="255" />
+                <button type="button" class="button2 osl-remove-competition">{L_OSL_REMOVE_COMPETITION}</button>
+            </div>
+        </div>
         <strong>{L_OSL_FIELDS_SCHEMA}</strong>
         <div class="osl-comp-fields"></div>
-        <p><button type="button" class="button2 osl-add-field">{L_OSL_ADD_FIELD}</button> <button type="button" class="button2 osl-remove-competition">{L_OSL_REMOVE_COMPETITION}</button></p>
+        <div class="osl-competition-actions">
+            <button type="button" class="button2 osl-add-field">{L_OSL_ADD_FIELD}</button>
+        </div>
     </div>
 </template>
 <script>
@@ -78,6 +112,28 @@ document.addEventListener('DOMContentLoaded', function () {
     if (checkbox) {
         checkbox.addEventListener('change', function () { settings.style.display = checkbox.checked ? '' : 'none'; });
     }
+    function refreshCompetitionStates() {
+        var competitionCount = container.querySelectorAll('.osl-competition').length;
+        container.querySelectorAll('.osl-competition').forEach(function (comp) {
+            var removeCompetitionButton = comp.querySelector('.osl-remove-competition');
+            if (removeCompetitionButton) {
+                var canRemoveCompetition = competitionCount > 1;
+                removeCompetitionButton.disabled = !canRemoveCompetition;
+                removeCompetitionButton.classList.toggle('osl-button-disabled', !canRemoveCompetition);
+                removeCompetitionButton.setAttribute('aria-disabled', canRemoveCompetition ? 'false' : 'true');
+            }
+            refreshFieldStates(comp);
+        });
+    }
+    function refreshFieldStates(comp) {
+        var fieldButtons = comp.querySelectorAll('.osl-remove-field');
+        var canRemoveField = fieldButtons.length > 1;
+        fieldButtons.forEach(function (button) {
+            button.disabled = !canRemoveField;
+            button.classList.toggle('osl-button-disabled', !canRemoveField);
+            button.setAttribute('aria-disabled', canRemoveField ? 'false' : 'true');
+        });
+    }
     function addField(comp) {
         var compIndex = comp.dataset.oslComp;
         var existing = comp.querySelectorAll('.osl-field-row');
@@ -89,26 +145,35 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         var markup = document.getElementById('osl-new-field-template').innerHTML.replace(/__C__/g, compIndex).replace(/__F__/g, nextField);
         comp.querySelector('.osl-comp-fields').insertAdjacentHTML('beforeend', markup);
+        refreshFieldStates(comp);
     }
     add.addEventListener('click', function () {
         if (container.querySelectorAll('.osl-competition').length >= 20) { return; }
         var markup = document.getElementById('osl-new-competition-template').innerHTML.replace(/__C__/g, nextComp++);
         container.insertAdjacentHTML('beforeend', markup);
         addField(container.lastElementChild);
+        refreshCompetitionStates();
     });
     container.addEventListener('click', function (event) {
         var button = event.target.closest('button');
-        if (!button) { return; }
+        if (!button || button.disabled) { return; }
         var comp = button.closest('.osl-competition');
         if (!comp) { return; }
         if (button.classList.contains('osl-add-field')) {
             if (comp.querySelectorAll('.osl-field-row').length < 20) { addField(comp); }
         } else if (button.classList.contains('osl-remove-field')) {
-            if (comp.querySelectorAll('.osl-field-row').length > 1) { button.closest('.osl-field-row').remove(); }
+            if (comp.querySelectorAll('.osl-field-row').length > 1) {
+                button.closest('.osl-field-row').remove();
+                refreshFieldStates(comp);
+            }
         } else if (button.classList.contains('osl-remove-competition')) {
-            if (container.querySelectorAll('.osl-competition').length > 1) { comp.remove(); }
+            if (container.querySelectorAll('.osl-competition').length > 1) {
+                comp.remove();
+                refreshCompetitionStates();
+            }
         }
     });
+    refreshCompetitionStates();
 });
 </script>
 <!-- ENDIF -->
