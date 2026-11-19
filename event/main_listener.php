@@ -312,6 +312,7 @@ class main_listener implements EventSubscriberInterface
                 'OSL_START_DATE' => $this->e($start),
                 'OSL_DURATION_MONTHS' => $this->request->variable('osl_duration_months', (int) ($league['duration_months'] ?? 12)),
                 'OSL_BEST_ROUNDS' => $this->request->variable('osl_best_rounds', (int) ($league['best_rounds_count'] ?? 8)),
+                'OSL_EXTENSION_DAYS' => $this->request->variable('osl_extension_days', (int) ($league['extension_days'] ?? 0)),
                 'OSL_GROUPS_ENABLED' => $this->request->is_set_post('osl_form_league')
                     ? $this->request->is_set_post('osl_groups_enabled')
                     : (bool) ($league['groups_enabled'] ?? false),
@@ -374,22 +375,18 @@ class main_listener implements EventSubscriberInterface
         $posted_tenx = $this->request->variable('osl_tenx', [['']]);
         $shooter_id = $mode === 'edit' ? (int) ($data['poster_id'] ?? 0) : (int) $this->user->data['user_id'];
 
-        // Only lock new submissions. Editing an existing post must remain possible.
-        // Resolve the active round using the same date boundaries as duplicate checks.
-        $reported_competitions = [];
-        if ($mode !== 'edit')
-        {
-            $active_round = $this->manager->get_round_index_for_date(
-                time(),
-                (int) $league['start_date'],
-                (int) $league['duration_months']
-            );
-            $reported_competitions = $this->reported_competitions_for_round(
-                (int) $league['league_id'],
-                $shooter_id,
-                $active_round
-            );
-        }
+        // Current and previous-round availability is computed on the server,
+        // using league boundaries rather than calendar-month assumptions.
+        $windows = $this->manager->get_submission_periods($league, time());
+        $current_round = (int) $windows['current'];
+        $previous_round = (int) $windows['previous'];
+        $current_reported = $this->reported_competitions_for_round(
+            (int) $league['league_id'], $shooter_id, $current_round
+        );
+        $previous_reported = $this->reported_competitions_for_round(
+            (int) $league['league_id'], $shooter_id, $previous_round
+        );
+        $posted_previous = $this->request->variable('osl_previous_period', [0]);
 
         $group = !$league['groups_enabled'] ? '' : ($is_submitted
             ? $this->request->variable('osl_shooter_group', '', true)
@@ -404,12 +401,41 @@ class main_listener implements EventSubscriberInterface
             $saved = $existing[$comp_id] ?? null;
             $scores = $saved ? (json_decode($saved['scores_data'], true) ?: []) : [];
             $tenx_scores = $saved ? (json_decode($saved['x_scores_data'] ?? '', true) ?: []) : [];
-            $date = $is_submitted ? ($posted_dates[$comp_id] ?? date('Y-m-d')) : ($saved ? $this->format_date((int) $saved['round_date']) : date('Y-m-d'));
+            $editing_existing = $mode === 'edit' && $saved !== null;
+            $can_current = $current_round > 0 && empty($current_reported[$comp_id]);
+            $can_previous = $previous_round > 0 && empty($previous_reported[$comp_id]);
+            $show_previous = !$editing_existing && $previous_round > 0;
+            $use_previous = $show_previous && ($is_submitted
+                ? !empty($posted_previous[$comp_id])
+                : (!$can_current && $can_previous));
+            $may_submit = $editing_existing || $can_current || $can_previous;
+            $chosen_round = $editing_existing ? (int) $saved['round_index']
+                : ($use_previous ? $previous_round : $current_round);
+            $chosen_bounds = $windows['rounds'][$chosen_round] ?? null;
+            $default_date = $use_previous && $chosen_bounds
+                ? $this->format_date((int) $chosen_bounds['end_ts'])
+                : $this->format_date(time());
+            $date = $is_submitted ? ($posted_dates[$comp_id] ?? $default_date)
+                : ($saved ? $this->format_date((int) $saved['round_date']) : $default_date);
+            $current_bounds = $windows['rounds'][$current_round] ?? null;
+            $previous_bounds = $windows['rounds'][$previous_round] ?? null;
             $this->template->assign_block_vars('osl_result_competitions', [
                 'ID' => $comp_id,
                 'NAME' => $this->e($competition['title']),
-                'REPORTED_THIS_MONTH' => !empty($reported_competitions[$comp_id]),
-                'SELECTED' => empty($reported_competitions[$comp_id]) && in_array($comp_id, $selected, true),
+                'REPORTED_THIS_MONTH' => !$may_submit,
+                'NO_OPEN_PERIOD' => $current_round === 0 && $previous_round === 0,
+                'SELECTED' => $may_submit && in_array($comp_id, $selected, true),
+                'SHOW_PREVIOUS_PERIOD' => $show_previous,
+                'PREVIOUS_SELECTED' => $use_previous,
+                'PREVIOUS_REPORTED' => !$can_previous,
+                'CURRENT_ALLOWED' => $editing_existing || $can_current,
+                'PREVIOUS_ALLOWED' => $can_previous,
+                'CURRENT_START' => $current_bounds ? $this->format_date((int) $current_bounds['start_ts']) : '',
+                'CURRENT_END' => $current_bounds ? $this->format_date((int) $current_bounds['end_ts']) : '',
+                'PREVIOUS_START' => $previous_bounds ? $this->format_date((int) $previous_bounds['start_ts']) : '',
+                'PREVIOUS_END' => $previous_bounds ? $this->format_date((int) $previous_bounds['end_ts']) : '',
+                'DATE_MIN' => $chosen_bounds ? $this->format_date((int) $chosen_bounds['start_ts']) : '',
+                'DATE_MAX' => $chosen_bounds ? $this->format_date((int) $chosen_bounds['end_ts']) : '',
                 'DATE' => $this->e($date),
             ]);
             foreach ($competition['fields_schema'] as $index => $field)
@@ -472,6 +498,11 @@ class main_listener implements EventSubscriberInterface
                 }
                 $duration = $this->request->variable('osl_duration_months', 12);
                 $best = $this->request->variable('osl_best_rounds', 8);
+                $extension_days = $this->request->variable('osl_extension_days', 0);
+                if ($extension_days < 0 || $extension_days > 7)
+                {
+                    $errors[] = $this->language->lang('OSL_ERR_EXTENSION_DAYS');
+                }
                 if ($duration < 1 || $duration > 24 || $best < 0 || $best > $duration)
                 {
                     $errors[] = $this->language->lang('OSL_ERR_LIMITS');
@@ -536,7 +567,8 @@ class main_listener implements EventSubscriberInterface
                     $league_id = (int) $league['league_id'];
                     if ($this->league_has_results($league_id))
                     {
-                        if ($start !== (int) $league['start_date'] || $duration !== (int) $league['duration_months'])
+                        if ($start !== (int) $league['start_date'] || $duration !== (int) $league['duration_months']
+                            || $extension_days !== (int) ($league['extension_days'] ?? 0))
                         {
                             $errors[] = $this->language->lang('OSL_ERR_SCHEDULE_LOCKED');
                         }
@@ -563,6 +595,9 @@ class main_listener implements EventSubscriberInterface
             $dates = $this->request->variable('osl_date', ['']);
             $scores = $this->request->variable('osl_score', [['']]);
             $tenx = $this->request->variable('osl_tenx', [['']]);
+            $previous_choices = $this->request->variable('osl_previous_period', [0]);
+            $windows = $this->manager->get_submission_periods($league, time());
+            $saved_in_this_post = $mode === 'edit' ? $this->result_by_post($post_id) : [];
             $shooter_id = $mode === 'edit' ? (int) ($data['poster_id'] ?? 0) : (int) $this->user->data['user_id'];
             if ($selected && $league['groups_enabled'])
             {
@@ -588,6 +623,25 @@ class main_listener implements EventSubscriberInterface
                 }
                 else
                 {
+                    if (isset($saved_in_this_post[$id]))
+                    {
+                        // Existing results may be corrected without reopening closed rounds;
+                        // editing a post must not move that result to another round.
+                        if ($round !== (int) $saved_in_this_post[$id]['round_index'])
+                        {
+                            $errors[] = $this->e($comp['title']) . ': ' . $this->language->lang('OSL_ERR_PERIOD_CLOSED');
+                        }
+                    }
+                    else
+                    {
+                        $allowed_round = !empty($previous_choices[$id])
+                            ? (int) $windows['previous']
+                            : (int) $windows['current'];
+                        if (!$allowed_round || $round !== $allowed_round)
+                        {
+                            $errors[] = $this->e($comp['title']) . ': ' . $this->language->lang('OSL_ERR_PERIOD_CLOSED');
+                        }
+                    }
                     $sql = 'SELECT result_id FROM ' . $this->results_table . '
                         WHERE league_id = ' . (int) $league['league_id'] . '
                         AND competition_id = ' . $id . '
@@ -680,6 +734,7 @@ class main_listener implements EventSubscriberInterface
                 'start_date' => $this->parse_date($this->request->variable('osl_start_date', '')),
                 'duration_months' => $this->request->variable('osl_duration_months', 12),
                 'best_rounds_count' => $this->request->variable('osl_best_rounds', 8),
+                'extension_days' => $this->request->variable('osl_extension_days', 0),
                 'groups_enabled' => json_encode($this->request->is_set_post('osl_groups_enabled')),
             ];
             $this->db->sql_transaction('begin');

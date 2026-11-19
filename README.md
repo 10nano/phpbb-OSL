@@ -93,3 +93,17 @@ The PHP files have passed syntax checks; full integration testing of this update
 ## License
 
 GPL-2.0-only. See `license.txt` for the full license text.
+
+
+### Extended submission window
+
+League organizers can set **Extension days** (0–7, default 0) when creating a league.
+During those calendar days after a round ends, a shooter may choose
+**Results for previous month** for each discipline individually. This checkbox
+is only displayed while the extension period is active; it disappears afterwards
+and reappears during the next round's extension period. The submitted shooting
+date must belong to the selected round. One result per shooter, discipline
+and round is enforced regardless of when it is submitted. Existing results
+can be edited without opening new late submissions. The setting is locked
+after results have been recorded. Migration `m4_extension_days` preserves
+existing data and defaults old leagues to 0 extra days.

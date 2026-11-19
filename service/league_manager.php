@@ -55,6 +55,38 @@ class league_manager
         return $rounds;
     }
 
+    /**
+     * The current round is open while it is running. For up to seven extra
+     * calendar days after a round ends, that round can also be submitted as
+     * the previous round. This includes the final round of the league.
+     */
+    public function get_submission_periods(array $league, int $now): array
+    {
+        $rounds = $this->generate_rounds((int) $league['start_date'], (int) $league['duration_months']);
+        $current = $this->get_round_index_for_date($now, (int) $league['start_date'], (int) $league['duration_months']);
+        $previous = 0;
+        $extra_days = max(0, min(7, (int) ($league['extension_days'] ?? 0)));
+        if ($extra_days > 0)
+        {
+            $zone = new \DateTimeZone('Europe/Warsaw');
+            foreach ($rounds as $index => $round)
+            {
+                $next_start = (int) $round['end_ts'] + 1;
+                $end_grace = (new \DateTimeImmutable('@' . $next_start))
+                    ->setTimezone($zone)
+                    ->modify('+' . $extra_days . ' days')
+                    ->getTimestamp();
+                if ($now >= $next_start && $now < $end_grace)
+                {
+                    $previous = (int) $index;
+                    break;
+                }
+            }
+        }
+
+        return ['current' => $current, 'previous' => $previous, 'rounds' => $rounds];
+    }
+
     public function get_round_index_for_date(int $result_timestamp, int $start_timestamp, int $duration_months): int
     {
         foreach ($this->generate_rounds($start_timestamp, $duration_months) as $index => $round)

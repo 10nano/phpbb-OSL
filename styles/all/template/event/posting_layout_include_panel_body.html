@@ -32,6 +32,10 @@
                     <input class="inputbox osl-form-input osl-form-input-number" type="number" id="osl_best_rounds" name="osl_best_rounds" min="0" max="24" value="{OSL_BEST_ROUNDS}" />
                 </div>
                 <div class="osl-config-row">
+                    <label for="osl_extension_days">{L_OSL_EXTENSION_DAYS}</label>
+                    <input class="inputbox osl-form-input osl-form-input-number" type="number" id="osl_extension_days" name="osl_extension_days" min="0" max="7" step="1" value="{OSL_EXTENSION_DAYS}" />
+                </div>
+                <div class="osl-config-row">
                     <label for="osl_groups_enabled">{L_OSL_GROUPS_ENABLED}</label>
                     <input type="checkbox" id="osl_groups_enabled" name="osl_groups_enabled" value="1"<!-- IF OSL_GROUPS_ENABLED --> checked="checked"<!-- ENDIF --> />
                 </div>
@@ -197,15 +201,21 @@ document.addEventListener('DOMContentLoaded', function () {
             </dl>
             <!-- ENDIF -->
             <!-- BEGIN osl_result_competitions -->
-            <div class="osl-result-competition panel bg2<!-- IF osl_result_competitions.REPORTED_THIS_MONTH --> osl-result-reported<!-- ENDIF -->" style="padding:12px;margin:12px 0"<!-- IF osl_result_competitions.REPORTED_THIS_MONTH --> aria-disabled="true"<!-- ENDIF -->>
+            <div class="osl-result-competition panel bg2<!-- IF osl_result_competitions.REPORTED_THIS_MONTH --> osl-result-reported<!-- ENDIF -->" style="padding:12px;margin:12px 0" data-current-allowed="<!-- IF osl_result_competitions.CURRENT_ALLOWED -->1<!-- ELSE -->0<!-- ENDIF -->" data-previous-allowed="<!-- IF osl_result_competitions.PREVIOUS_ALLOWED -->1<!-- ELSE -->0<!-- ENDIF -->" data-current-from="{osl_result_competitions.CURRENT_START}" data-current-to="{osl_result_competitions.CURRENT_END}" data-previous-from="{osl_result_competitions.PREVIOUS_START}" data-previous-to="{osl_result_competitions.PREVIOUS_END}"<!-- IF osl_result_competitions.REPORTED_THIS_MONTH --> aria-disabled="true"<!-- ENDIF -->>
                 <h4>{osl_result_competitions.NAME}</h4>
                 <!-- IF osl_result_competitions.REPORTED_THIS_MONTH -->
                 <label class="osl-result-reported-toggle">
                     <input type="checkbox" disabled="disabled" />
                     {L_OSL_SUBMIT_RESULT}
                 </label>
-                <p class="osl-result-reported-message"><strong>{L_OSL_RESULT_REPORTED_THIS_MONTH}</strong></p>
+                <p class="osl-result-reported-message"><strong><!-- IF osl_result_competitions.NO_OPEN_PERIOD -->{L_OSL_RESULT_NO_OPEN_PERIOD}<!-- ELSE -->{L_OSL_RESULT_REPORTED_THIS_MONTH}<!-- ENDIF --></strong></p>
                 <!-- ELSE -->
+                <!-- IF osl_result_competitions.SHOW_PREVIOUS_PERIOD -->
+                <label class="osl-previous-period-choice">
+                    <input type="checkbox" class="osl-previous-period-toggle" name="osl_previous_period[{osl_result_competitions.ID}]" value="1"<!-- IF osl_result_competitions.PREVIOUS_SELECTED --> checked="checked"<!-- ENDIF --><!-- IF osl_result_competitions.PREVIOUS_REPORTED --> disabled="disabled"<!-- ENDIF --> />
+                    {L_OSL_PREVIOUS_PERIOD}
+                </label>
+                <!-- ENDIF -->
                 <label>
                     <input type="checkbox" class="osl-result-toggle" name="osl_selected[]" value="{osl_result_competitions.ID}"<!-- IF osl_result_competitions.SELECTED --> checked="checked"<!-- ENDIF --> />
                     {L_OSL_SUBMIT_RESULT}
@@ -213,7 +223,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="osl-result-fields"<!-- IF not osl_result_competitions.SELECTED --> style="display:none"<!-- ENDIF -->>
                     <dl>
                         <dt><label for="osl_date_{osl_result_competitions.ID}">{L_OSL_RESULT_DATE}</label></dt>
-                        <dd><input class="inputbox autowidth" type="date" id="osl_date_{osl_result_competitions.ID}" name="osl_date[{osl_result_competitions.ID}]" value="{osl_result_competitions.DATE}" /></dd>
+                        <dd><input class="inputbox autowidth" type="date" id="osl_date_{osl_result_competitions.ID}" name="osl_date[{osl_result_competitions.ID}]" value="{osl_result_competitions.DATE}" min="{osl_result_competitions.DATE_MIN}" max="{osl_result_competitions.DATE_MAX}" /></dd>
                     </dl>
                     <!-- BEGIN osl_result_competitions.fields -->
                     <dl>
@@ -236,11 +246,33 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('#osl-result-panel .osl-result-toggle').forEach(function (toggle) {
-        toggle.addEventListener('change', function () {
-            var fields = toggle.closest('.osl-result-competition').querySelector('.osl-result-fields');
-            fields.style.display = toggle.checked ? '' : 'none';
-        });
+    document.querySelectorAll('#osl-result-panel .osl-result-competition').forEach(function (comp) {
+        var resultToggle = comp.querySelector('.osl-result-toggle');
+        if (!resultToggle) { return; }
+        var previousToggle = comp.querySelector('.osl-previous-period-toggle');
+        var fields = comp.querySelector('.osl-result-fields');
+        var dateInput = comp.querySelector('input[type="date"]');
+        function updatePeriod(changeDate) {
+            var previous = previousToggle && previousToggle.checked;
+            var canSubmit = comp.dataset[previous ? 'previousAllowed' : 'currentAllowed'] === '1';
+            resultToggle.disabled = !canSubmit;
+            if (!canSubmit) { resultToggle.checked = false; }
+            fields.style.display = canSubmit && resultToggle.checked ? '' : 'none';
+            if (dateInput) {
+                var from = comp.dataset[previous ? 'previousFrom' : 'currentFrom'];
+                var to = comp.dataset[previous ? 'previousTo' : 'currentTo'];
+                dateInput.min = from || '';
+                dateInput.max = to || '';
+                if (changeDate && from && to && (!dateInput.value || dateInput.value < from || dateInput.value > to)) {
+                    dateInput.value = previous ? to : from;
+                }
+            }
+        }
+        resultToggle.addEventListener('change', function () { updatePeriod(false); });
+        if (previousToggle) {
+            previousToggle.addEventListener('change', function () { updatePeriod(true); });
+        }
+        updatePeriod(false);
     });
 });
 </script>

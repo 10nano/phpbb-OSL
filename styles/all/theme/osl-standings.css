@@ -399,3 +399,16 @@
 @media (max-width: 700px) {
     #osl-result-panel .osl-result-back { margin-left: 0; }
 }
+
+/* The previous-round selector is rendered only while grace days are active. */
+#osl-result-panel .osl-previous-period-choice {
+    display: block;
+    margin: 5px 0 9px;
+    font-weight: 700;
+}
+#osl-result-panel .osl-previous-period-choice input {
+    margin-right: 6px;
+}
+#osl-result-panel .osl-previous-period-choice:has(input:disabled) {
+    color: #777 !important;
+}
