@@ -11,6 +11,7 @@ if (empty($lang) || !is_array($lang))
 }
 
 $lang = array_merge($lang, [
+    'OSL_TEST_CLOCK_WARNING' => 'Uwaga! Włączony zegar testowy OSL',
 	'OSL_TAB_LEAGUE'           => 'Liga Strzelecka',
 	'OSL_TAB_RESULT'           => 'Wyniki Zawodów',
 	'OSL_ENABLE_LEAGUE'        => 'Utwórz Ligę Strzelecką w tym wątku',

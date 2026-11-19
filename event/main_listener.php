@@ -124,6 +124,12 @@ class main_listener implements EventSubscriberInterface
         return (int) ($row['topic_first_post_id'] ?? 0);
     }
 
+    /** Current time for OSL submission windows only (real time by default). */
+    protected function osl_now(): int
+    {
+        return \tennano\osl\service\test_clock::now($this->request);
+    }
+
     protected function format_date(int $timestamp): string
     {
         return (new \DateTimeImmutable('@' . $timestamp))->setTimezone(new \DateTimeZone('Europe/Warsaw'))->format('Y-m-d');
@@ -300,10 +306,19 @@ class main_listener implements EventSubscriberInterface
         $first_id = $this->get_first_post_id($topic_id, $data);
         $league = $topic_id ? $this->get_cached_league($topic_id) : null;
         $is_edit_first = $mode === 'edit' && $post_id > 0 && $post_id === $first_id;
+        $simulated_now = \tennano\osl\service\test_clock::simulated_time($this->request);
+        if ($simulated_now !== null)
+        {
+            $this->template->assign_vars([
+                'S_OSL_TEST_CLOCK_ACTIVE' => true,
+                'OSL_TEST_CLOCK_DATETIME' => (new \DateTimeImmutable('@' . $simulated_now))
+                    ->setTimezone(new \DateTimeZone('Europe/Warsaw'))->format('Y-m-d H:i'),
+            ]);
+        }
 
         if (($mode === 'post' || $is_edit_first) && $this->creator_permissions->can_create($forum_id))
         {
-            $start = $this->request->variable('osl_start_date', $league ? $this->format_date((int) $league['start_date']) : date('Y') . '-01-01');
+            $start = $this->request->variable('osl_start_date', $league ? $this->format_date((int) $league['start_date']) : substr($this->format_date($this->osl_now()), 0, 4) . '-01-01');
             $this->template->assign_vars([
                 'S_OSL_CAN_CREATE_LEAGUE' => true,
                 'OSL_ENABLED' => $this->request->is_set_post('osl_form_league') ? $this->request->is_set_post('osl_enabled') : (bool) $league,
@@ -377,7 +392,7 @@ class main_listener implements EventSubscriberInterface
 
         // Current and previous-round availability is computed on the server,
         // using league boundaries rather than calendar-month assumptions.
-        $windows = $this->manager->get_submission_periods($league, time());
+        $windows = $this->manager->get_submission_periods($league, $this->osl_now());
         $current_round = (int) $windows['current'];
         $previous_round = (int) $windows['previous'];
         $current_reported = $this->reported_competitions_for_round(
@@ -414,7 +429,7 @@ class main_listener implements EventSubscriberInterface
             $chosen_bounds = $windows['rounds'][$chosen_round] ?? null;
             $default_date = $use_previous && $chosen_bounds
                 ? $this->format_date((int) $chosen_bounds['end_ts'])
-                : $this->format_date(time());
+                : $this->format_date($this->osl_now());
             $date = $is_submitted ? ($posted_dates[$comp_id] ?? $default_date)
                 : ($saved ? $this->format_date((int) $saved['round_date']) : $default_date);
             $current_bounds = $windows['rounds'][$current_round] ?? null;
@@ -596,7 +611,7 @@ class main_listener implements EventSubscriberInterface
             $scores = $this->request->variable('osl_score', [['']]);
             $tenx = $this->request->variable('osl_tenx', [['']]);
             $previous_choices = $this->request->variable('osl_previous_period', [0]);
-            $windows = $this->manager->get_submission_periods($league, time());
+            $windows = $this->manager->get_submission_periods($league, $this->osl_now());
             $saved_in_this_post = $mode === 'edit' ? $this->result_by_post($post_id) : [];
             $shooter_id = $mode === 'edit' ? (int) ($data['poster_id'] ?? 0) : (int) $this->user->data['user_id'];
             if ($selected && $league['groups_enabled'])

@@ -1,0 +1,45 @@
+{% INCLUDE 'overall_header.html' %}
+
+<h1>{{ lang('ACP_TENNANO_OSL_CLOCK') }}</h1>
+<p>{{ lang('ACP_TENNANO_OSL_CLOCK_EXPLAIN') }}</p>
+
+{% if OSL_TEST_CLOCK_ENABLED %}
+    <div class="errorbox">
+        <h3>{{ lang('ACP_TENNANO_OSL_CLOCK_ON') }}</h3>
+        <p>{{ lang('ACP_TENNANO_OSL_CLOCK_ACTIVE') }}</p>
+    </div>
+{% endif %}
+{% if not OSL_TEST_CLOCK_LOCAL_REQUEST %}
+    <div class="noticebox">
+        <h3>{{ lang('ACP_TENNANO_OSL_CLOCK_NOT_LOCAL') }}</h3>
+        <p>{{ lang('ACP_TENNANO_OSL_CLOCK_NOT_LOCAL_EXPLAIN') }}</p>
+    </div>
+{% endif %}
+
+<form id="acp_osl_test_clock" method="post" action="{{ U_ACTION }}">
+    <fieldset>
+        <legend>{{ lang('ACP_TENNANO_OSL_CLOCK_SETTINGS') }}</legend>
+        <dl>
+            <dt><label for="osl_test_clock_enabled">{{ lang('ACP_TENNANO_OSL_CLOCK_ENABLE') }}</label><br />
+                <span>{{ lang('ACP_TENNANO_OSL_CLOCK_ENABLE_EXPLAIN') }}</span></dt>
+            <dd><label><input type="radio" class="radio" name="osl_test_clock_enabled" id="osl_test_clock_enabled" value="1"{% if OSL_TEST_CLOCK_ENABLED %} checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+                <label><input type="radio" class="radio" name="osl_test_clock_enabled" value="0"{% if not OSL_TEST_CLOCK_ENABLED %} checked="checked"{% endif %} /> {{ lang('NO') }}</label></dd>
+        </dl>
+        <dl>
+            <dt><label for="osl_test_clock_date">{{ lang('ACP_TENNANO_OSL_CLOCK_DATE') }}</label></dt>
+            <dd><input type="date" id="osl_test_clock_date" name="osl_test_clock_date" value="{{ OSL_TEST_CLOCK_DATE }}" required="required" /></dd>
+        </dl>
+        <dl>
+            <dt><label for="osl_test_clock_time">{{ lang('ACP_TENNANO_OSL_CLOCK_TIME') }}</label></dt>
+            <dd><input type="time" id="osl_test_clock_time" name="osl_test_clock_time" value="{{ OSL_TEST_CLOCK_TIME }}" step="60" required="required" /></dd>
+        </dl>
+        <p>{{ lang('ACP_TENNANO_OSL_CLOCK_NOW') }}: <strong>{{ OSL_TEST_CLOCK_NOW }}</strong> (Europe/Warsaw)</p>
+        <p class="submit-buttons">
+            <input class="button1" type="submit" id="submit" name="submit" value="{{ lang('SUBMIT') }}" />
+            <input class="button2" type="reset" value="{{ lang('RESET') }}" />
+        </p>
+        {{ S_FORM_TOKEN }}
+    </fieldset>
+</form>
+
+{% INCLUDE 'overall_footer.html' %}

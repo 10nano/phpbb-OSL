@@ -11,6 +11,7 @@ if (empty($lang) || !is_array($lang))
 }
 
 $lang = array_merge($lang, [
+    'OSL_TEST_CLOCK_WARNING' => 'Warning! OSL test clock is enabled',
 	'OSL_TAB_LEAGUE'           => 'Shooting League',
 	'OSL_TAB_RESULT'           => 'Match Results',
 	'OSL_ENABLE_LEAGUE'        => 'Create a Shooting League in this topic',

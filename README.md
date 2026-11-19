@@ -120,3 +120,14 @@ the league title. Each download contains all competitions:
 
 Exports use the same ranking service as the on-screen tables and require read
 permission to the parent forum. No database migration is needed.
+
+
+## Optional test clock (test-clock branch only)
+
+The OSL test clock is disabled by default. In ACP, go to **Extensions → OSL → OSL test clock** to enable or disable time simulation and to select a test date and time (Europe/Warsaw). The settings are stored in this forum's phpBB configuration, not in a tracked configuration file.
+
+The simulated time applies only to the submission-window logic in OSL (form display, result submission validation, and the initial default league-year field), and only if the HTTP request originates from `127.0.0.1` or `::1`. All other requests use the actual server time, even when the ACP switch is enabled. The simulator does not alter phpBB post timestamps, the Windows clock, or any other extension. It does not affect export timestamps.
+
+**Install/upgrade:** A new, data-preserving migration registers the ACP module and disabled-by-default settings. Use ACP → Customise → Manage extensions to disable OSL (do **not** delete its data), copy the updated extension files, enable OSL again, and purge phpBB's cache. Installation requires an administrator with the `a_board` permission. Keep this feature in the `test-clock` Git branch, not `main`.
+
+**Warning:** Submissions made during testing still create real records in the local database. Use a separate test forum and database. The clock is intentionally limited to direct localhost requests, and should stay disabled on any publicly accessible installation.
