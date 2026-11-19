@@ -372,3 +372,30 @@
 #osl-result-panel .osl-score-inputs { flex-wrap: wrap; gap: 14px; }
 #osl-result-panel .osl-tenx-result-input { width: 75px; }
 .osl-standings table.osl-results-table .osl-col-tenx { min-width: 55px; }
+
+/* Back to the current forum from the league result-entry tab. */
+#osl-result-panel .osl-result-back {
+    margin: 12px 0 0 76px;
+}
+#osl-result-panel .osl-result-back-button {
+    display: inline-block;
+    padding: 7px 12px;
+    color: #fff !important;
+    background: #222 !important;
+    border: 1px solid #111 !important;
+    border-radius: 0 !important;
+    font-weight: 700 !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    cursor: pointer;
+}
+#osl-result-panel .osl-result-back-button:hover,
+#osl-result-panel .osl-result-back-button:focus {
+    color: #fff !important;
+    background: #555 !important;
+    text-decoration: none !important;
+}
+@media (max-width: 700px) {
+    #osl-result-panel .osl-result-back { margin-left: 0; }
+}
