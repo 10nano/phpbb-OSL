@@ -56,6 +56,7 @@
                                 <input class="inputbox osl-form-input osl-form-input-field-name" type="text" name="osl_comp_field_name[{osl_competitions.INDEX}][{osl_competitions.fields.INDEX}]" value="{osl_competitions.fields.NAME}" placeholder="{L_OSL_FIELD_NAME}" />
                                 <label>{L_OSL_FIELD_MIN}: <input class="inputbox osl-form-input osl-form-input-range" type="number" step="0.01" name="osl_comp_field_min[{osl_competitions.INDEX}][{osl_competitions.fields.INDEX}]" value="{osl_competitions.fields.MIN}" /></label>
                                 <label>{L_OSL_FIELD_MAX}: <input class="inputbox osl-form-input osl-form-input-range" type="number" step="0.01" name="osl_comp_field_max[{osl_competitions.INDEX}][{osl_competitions.fields.INDEX}]" value="{osl_competitions.fields.MAX}" /></label>
+                                <label class="osl-tenx-config"><input class="osl-tenx-toggle" type="checkbox" name="osl_comp_field_tenx[{osl_competitions.INDEX}][{osl_competitions.fields.INDEX}]" value="1"<!-- IF osl_competitions.fields.TENX_ENABLED --> checked="checked"<!-- ENDIF --> /> {L_OSL_ENABLE_TENX}</label>
                                 <button type="button" class="button2 osl-remove-field" title="{L_OSL_REMOVE_FIELD}">{L_OSL_REMOVE_FIELD}</button>
                             </div>
                             <!-- END osl_competitions.fields -->
@@ -78,6 +79,7 @@
         <input class="inputbox osl-form-input osl-form-input-field-name" type="text" name="osl_comp_field_name[__C__][__F__]" placeholder="{L_OSL_FIELD_NAME}" />
         <label>{L_OSL_FIELD_MIN}: <input class="inputbox osl-form-input osl-form-input-range" type="number" step="0.01" name="osl_comp_field_min[__C__][__F__]" value="0" /></label>
         <label>{L_OSL_FIELD_MAX}: <input class="inputbox osl-form-input osl-form-input-range" type="number" step="0.01" name="osl_comp_field_max[__C__][__F__]" value="40" /></label>
+        <label class="osl-tenx-config"><input class="osl-tenx-toggle" type="checkbox" name="osl_comp_field_tenx[__C__][__F__]" value="1" /> {L_OSL_ENABLE_TENX}</label>
         <button type="button" class="button2 osl-remove-field">{L_OSL_REMOVE_FIELD}</button>
     </div>
 </template>
@@ -209,7 +211,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     <!-- BEGIN osl_result_competitions.fields -->
                     <dl>
                         <dt><label for="osl_score_{osl_result_competitions.ID}_{osl_result_competitions.fields.INDEX}">{osl_result_competitions.fields.NAME} ({osl_result_competitions.fields.MIN}–{osl_result_competitions.fields.MAX})</label></dt>
-                        <dd><input class="inputbox autowidth" type="number" step="0.01" id="osl_score_{osl_result_competitions.ID}_{osl_result_competitions.fields.INDEX}" name="osl_score[{osl_result_competitions.ID}][{osl_result_competitions.fields.INDEX}]" value="{osl_result_competitions.fields.VALUE}" min="{osl_result_competitions.fields.MIN}" max="{osl_result_competitions.fields.MAX}" /></dd>
+                        <dd class="osl-score-inputs">
+                            <input class="inputbox autowidth" type="number" step="0.01" id="osl_score_{osl_result_competitions.ID}_{osl_result_competitions.fields.INDEX}" name="osl_score[{osl_result_competitions.ID}][{osl_result_competitions.fields.INDEX}]" value="{osl_result_competitions.fields.VALUE}" min="{osl_result_competitions.fields.MIN}" max="{osl_result_competitions.fields.MAX}" />
+                            <!-- IF osl_result_competitions.fields.TENX_ENABLED -->
+                            <label for="osl_tenx_{osl_result_competitions.ID}_{osl_result_competitions.fields.INDEX}">{L_OSL_TENX} (0–{osl_result_competitions.fields.TENX_MAX}): <input class="inputbox autowidth osl-tenx-result-input" type="number" step="1" min="0" max="{osl_result_competitions.fields.TENX_MAX}" id="osl_tenx_{osl_result_competitions.ID}_{osl_result_competitions.fields.INDEX}" name="osl_tenx[{osl_result_competitions.ID}][{osl_result_competitions.fields.INDEX}]" value="{osl_result_competitions.fields.TENX_VALUE}" /></label>
+                            <!-- ENDIF -->
+                        </dd>
                     </dl>
                     <!-- END osl_result_competitions.fields -->
                 </div>

@@ -101,6 +101,19 @@ class league_manager
         return $items;
     }
 
+    /** Whether a discipline has at least one series with an inner-ten counter. */
+    public function competition_has_tenx(array $competition): bool
+    {
+        foreach ($competition['fields_schema'] as $field)
+        {
+            if (!empty($field['ten_x_enabled']))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** Returns competition_id => standings. Independent scores and ranking per competition. */
     public function get_league_standings(array $league): array
     {
@@ -137,7 +150,10 @@ class league_manager
             // Keep the most recent group if historical rows differ. New writes
             // synchronize the group across all of the user's league results.
             $players[$comp_id][$key]['group'] = (string) $row['shooter_group'];
-            $players[$comp_id][$key]['scores'][(int) $row['round_index']] = (float) $row['total_score'];
+            $players[$comp_id][$key]['scores'][(int) $row['round_index']] = [
+                'score' => (float) $row['total_score'],
+                'ten_x' => (int) ($row['total_x'] ?? 0),
+            ];
         }
         $this->db->sql_freeresult($res);
 
@@ -154,29 +170,45 @@ class league_manager
         $standings = [];
         foreach ($players_data as $player)
         {
-            $scores = $player['scores'];
-            $numeric = array_values($scores);
-            $starts = count($numeric);
-            $total_all = array_sum($numeric);
-            rsort($numeric, SORT_NUMERIC);
+            // A start keeps its ordinary points and the independent 10X count.
+            $rounds = $player['scores'];
+            $starts = count($rounds);
+            $numeric = array_values($rounds);
+            usort($numeric, static function ($a, $b) {
+                $cmp = $b['score'] <=> $a['score'];
+                return $cmp ?: ($b['ten_x'] <=> $a['ten_x']);
+            });
+            // If scores tie at the best-N boundary, prefer the start with more 10X.
             $best = $best_rounds_count > 0 ? array_slice($numeric, 0, $best_rounds_count) : $numeric;
+            $round_scores = [];
+            $round_tenx = [];
+            foreach ($rounds as $index => $entry)
+            {
+                $round_scores[$index] = $entry['score'];
+                $round_tenx[$index] = $entry['ten_x'];
+            }
+            $total_all = array_sum(array_column($numeric, 'score'));
             $standings[] = [
                 'user_id' => $player['user_id'],
                 'username' => $player['username'],
                 'user_colour' => $player['user_colour'],
                 'group' => $player['group'],
-                'round_scores' => $scores,
-                'total_best' => array_sum($best),
+                'round_scores' => $round_scores,
+                'round_tenx' => $round_tenx,
+                'total_best' => array_sum(array_column($best, 'score')),
+                'tenx_best' => array_sum(array_column($best, 'ten_x')),
                 'total_all' => $total_all,
                 'starts' => $starts,
                 'average' => $starts ? $total_all / $starts : 0,
-                'highest_single' => $starts ? max($numeric) : 0,
+                'highest_single' => $starts ? $numeric[0]['score'] : 0,
                 'rank' => 0,
             ];
         }
 
-        usort($standings, function ($a, $b) {
-            foreach (['total_best', 'total_all', 'average', 'highest_single'] as $key)
+        usort($standings, static function ($a, $b) {
+            // Points decide the standings. 10X is the first tie-breaker,
+            // ahead of total points from all starts, average, and best result.
+            foreach (['total_best', 'tenx_best', 'total_all', 'average', 'highest_single'] as $key)
             {
                 $cmp = $b[$key] <=> $a[$key];
                 if ($cmp !== 0)
@@ -191,7 +223,7 @@ class league_manager
         $rank = 0;
         foreach ($standings as $pos => &$player)
         {
-            $signature = [$player['total_best'], $player['total_all'], $player['average'], $player['highest_single']];
+            $signature = [$player['total_best'], $player['tenx_best'], $player['total_all'], $player['average'], $player['highest_single']];
             if ($prev === null || $signature !== $prev)
             {
                 $rank = $pos + 1;
@@ -202,4 +234,5 @@ class league_manager
         unset($player);
         return $standings;
     }
+
 }

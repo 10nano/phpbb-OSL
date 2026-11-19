@@ -1,6 +1,6 @@
 # OSL – Online Shooting League
 
-**Project version: 0.2.0-dev** (development release, prior to the first public release).
+**Project version: 0.3.0-dev** (development release, prior to the first public release).
 
 A phpBB 3.3.x extension (`tennano/osl`) that manages shooting leagues within forum topics. Each league supports multiple independent disciplines, with separate result submissions and monthly standings.
 
@@ -17,7 +17,7 @@ A phpBB 3.3.x extension (`tennano/osl`) that manages shooting leagues within for
 ## Creating a league
 
 - When creating a new topic, open the **Shooting League** tab, enable league creation, and enter the title, starting date, duration, and number of best starts to count.
-- In **Disciplines**, rename the initial discipline (for example, `Rifle results`) and configure its scoring fields, each with its own permitted range.
+- In **Disciplines**, rename the initial discipline (for example, `Rifle results`) and configure its scoring fields, each with its own permitted range. For paper targets, enable **Count inner tens (10X)** on an individual series. The shot count is **always derived** from **maximum series points / 10**; there is no manual shot-count field. To enable 10X, the maximum must therefore be a positive multiple of 10 (for example, 400 points means 40 shots and permits 0–40 inner tens).
 - Use **+ Add discipline** to create additional disciplines (for example, `Pistol results`) with independent scoring fields.
 - Select **Show an optional Group / Club column in standings** to add a club/group field to result submissions and a Group column before Nickname in each standings table. If disabled, both the field and column remain hidden. The group is not an additional discipline.
 - Write the league rules in the body of the first post.
@@ -25,12 +25,12 @@ A phpBB 3.3.x extension (`tennano/osl`) that manages shooting leagues within for
 ## Submitting and editing results
 
 - When replying to a league topic, open the **Match Results** tab. Each discipline has a separate checkbox, **its own date**, and its own scoring fields. When the Group column is enabled, one optional **Group / Club** text field appears above the disciplines and is shared by the participant across the league.
-- Select and complete only the disciplines for which you want to submit results. Unselected disciplines are not saved.
+- Select and complete only the disciplines for which you want to submit results. Unselected disciplines are not saved. If a series has 10X enabled, enter its independent integer 10X count (0 through the automatically calculated number of shots) immediately after its score. It does not add extra points.
 - You can submit results for another discipline in a later reply, even several days later.
 - Each participant may have only **one result per discipline and round (the league's monthly period)**, regardless of group or post.
 - The submitted club/group name is associated with the participant in that league and is automatically filled in on subsequent submissions. It is optional (up to 100 characters) and can be changed or cleared in a later submission or while editing an existing one. Changes also update the participant's earlier results in the same league without splitting their standings entry.
 - Editing a reply allows saved scores to be corrected. Deselecting a discipline while editing removes **only that discipline's result from the edited post**.
-- The first post displays a separate standings table for each discipline. Replies containing results show the submitted results for all selected disciplines.
+- The first post displays a separate standings table for each discipline. Where 10X is enabled, a **Total 10X** column shows the number of inner tens from the best counted starts, and each monthly round has separate **PTS** and **10X** subcolumns. Months without a result show a dash in both cells; a submitted round with zero inner tens shows `0`. Points determine ranking first, then 10X breaks ties ahead of the former criteria (total from all starts, average, and highest single result). When equal scores compete for the last counted start, the start with more 10X is selected. Replies containing results show the submitted results for all selected disciplines.
 - After a discipline has recorded results, its scoring fields cannot be modified and the discipline cannot be deleted. Its name may still be corrected. League dates and the Group column visibility setting are also locked once results exist. Participants can still update their club/group names.
 - A result submission may be sent without typing any additional message text; a written comment remains optional.
 
@@ -45,6 +45,8 @@ The initial migration (`migrations/v10x/m1_initial_schema.php`) creates three ta
 The second migration (`migrations/v10x/m2_forum_creators.php`) adds:
 
 - `osl_forum_creators`: forum-specific permissions to create league topics.
+
+The third migration (`migrations/v10x/m3_inner_tens.php`) extends `osl_results` with `x_scores_data` (per-series 10X counts) and `total_x` (per-start sum), leaving existing scores intact and defaulting old 10X counts to zero.
 
 Unique indexes on `osl_results` enforce `(post_id, competition_id)` and `(league_id, competition_id, user_id, round_index)`.
 
@@ -81,11 +83,12 @@ The `m2_forum_creators` migration creates an initially empty assignments table a
 5. In the next month, submit both disciplines in one reply using different dates.
 6. Edit a post with two results, deselect one discipline, and verify that the other result remains. The removed discipline should become available for a new submission.
 7. Check the standings order, best-round totals, overall totals, averages, number of starts, and tied ranks.
-8. Verify that league creation is unavailable to all users until a forum-specific grant has been made.
+8. Test a series with 10X (including zero, the maximum count, and an out-of-range count), two shooters tied on points but different on 10X, then another discipline with 10X disabled. Confirm that points are not doubled and that an existing result still edits correctly.
+9. Verify that league creation is unavailable to all users until a forum-specific grant has been made.
 
 ## Testing notes
 
-The PHP files have passed syntax checks and the extension has been exercised on a development phpBB/XAMPP installation. For a new forum installation, perform the integration checks above, including a fresh-install test of both migrations.
+The PHP files have passed syntax checks; full integration testing of this updated build on phpBB/XAMPP remains necessary. For a new forum installation, perform the integration checks above, including a fresh-install test of all three migrations.
 
 ## License
 

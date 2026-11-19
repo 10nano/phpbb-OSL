@@ -9,17 +9,26 @@
             <table class="osl-results-table">
                 <thead>
                     <tr>
-                        <th class="osl-col-rank">{L_OSL_COL_RANK}</th>
-                        <!-- IF postrow.S_OSL_HAS_GROUPS --><th class="osl-col-group">{L_OSL_COL_GROUP}</th><!-- ENDIF -->
-                        <th class="osl-col-nick">{L_OSL_COL_NICK}</th>
-                        <th class="osl-col-summary">{postrow.OSL_BEST_TOTAL_LABEL}</th>
-                        <th class="osl-col-summary">{L_OSL_COL_TOTAL_ALL}</th>
-                        <th class="osl-col-summary">{L_OSL_COL_AVG}</th>
-                        <th class="osl-col-summary">{L_OSL_COL_STARTS}</th>
+                        <th class="osl-col-rank"<!-- IF postrow.osl_tables.HAS_TENX --> rowspan="2"<!-- ENDIF -->>{L_OSL_COL_RANK}</th>
+                        <!-- IF postrow.S_OSL_HAS_GROUPS --><th class="osl-col-group"<!-- IF postrow.osl_tables.HAS_TENX --> rowspan="2"<!-- ENDIF -->>{L_OSL_COL_GROUP}</th><!-- ENDIF -->
+                        <th class="osl-col-nick"<!-- IF postrow.osl_tables.HAS_TENX --> rowspan="2"<!-- ENDIF -->>{L_OSL_COL_NICK}</th>
+                        <th class="osl-col-summary"<!-- IF postrow.osl_tables.HAS_TENX --> rowspan="2"<!-- ENDIF -->>{postrow.OSL_BEST_TOTAL_LABEL}</th>
+                        <!-- IF postrow.osl_tables.HAS_TENX --><th class="osl-col-summary osl-col-tenx" title="{L_OSL_TENX_BEST_HELP}" rowspan="2">{L_OSL_COL_TENX_SUM}</th><!-- ENDIF -->
+                        <!-- IF postrow.S_OSL_SHOW_TOTAL_ALL --><th class="osl-col-summary"<!-- IF postrow.osl_tables.HAS_TENX --> rowspan="2"<!-- ENDIF -->>{L_OSL_COL_TOTAL_ALL}</th><!-- ENDIF -->
+                        <th class="osl-col-summary"<!-- IF postrow.osl_tables.HAS_TENX --> rowspan="2"<!-- ENDIF -->>{L_OSL_COL_AVG}</th>
+                        <th class="osl-col-summary"<!-- IF postrow.osl_tables.HAS_TENX --> rowspan="2"<!-- ENDIF -->>{L_OSL_COL_STARTS}</th>
                         <!-- BEGIN postrow.osl_tables.rounds -->
-                        <th class="osl-col-round" title="{postrow.osl_tables.rounds.FULL_DATE}">{postrow.osl_tables.rounds.LABEL}</th>
+                        <th class="osl-col-round" title="{postrow.osl_tables.rounds.FULL_DATE}"<!-- IF postrow.osl_tables.HAS_TENX --> colspan="2"<!-- ENDIF -->>{postrow.osl_tables.rounds.LABEL}</th>
                         <!-- END postrow.osl_tables.rounds -->
                     </tr>
+                    <!-- IF postrow.osl_tables.HAS_TENX -->
+                    <tr class="osl-month-subheaders">
+                        <!-- BEGIN postrow.osl_tables.rounds -->
+                        <th class="osl-col-round">{L_OSL_COL_POINTS_SHORT}</th>
+                        <th class="osl-col-round osl-col-tenx">{L_OSL_TENX}</th>
+                        <!-- END postrow.osl_tables.rounds -->
+                    </tr>
+                    <!-- ENDIF -->
                 </thead>
                 <tbody>
                     <!-- BEGIN postrow.osl_tables.standings -->
@@ -28,11 +37,13 @@
                         <!-- IF postrow.S_OSL_HAS_GROUPS --><td class="osl-col-group">{postrow.osl_tables.standings.GROUP}</td><!-- ENDIF -->
                         <td class="osl-col-nick">{postrow.osl_tables.standings.USERNAME}</td>
                         <td class="osl-col-summary"><strong>{postrow.osl_tables.standings.TOTAL_BEST}</strong></td>
-                        <td class="osl-col-summary">{postrow.osl_tables.standings.TOTAL_ALL}</td>
+                        <!-- IF postrow.osl_tables.HAS_TENX --><td class="osl-col-summary osl-col-tenx">{postrow.osl_tables.standings.TENX_BEST}</td><!-- ENDIF -->
+                        <!-- IF postrow.S_OSL_SHOW_TOTAL_ALL --><td class="osl-col-summary">{postrow.osl_tables.standings.TOTAL_ALL}</td><!-- ENDIF -->
                         <td class="osl-col-summary">{postrow.osl_tables.standings.AVERAGE}</td>
                         <td class="osl-col-summary">{postrow.osl_tables.standings.STARTS}</td>
                         <!-- BEGIN postrow.osl_tables.standings.scores -->
                         <td class="osl-col-round">{postrow.osl_tables.standings.scores.VALUE}</td>
+                        <!-- IF postrow.osl_tables.HAS_TENX --><td class="osl-col-round osl-col-tenx">{postrow.osl_tables.standings.scores.TENX}</td><!-- ENDIF -->
                         <!-- END postrow.osl_tables.standings.scores -->
                     </tr>
                     <!-- END postrow.osl_tables.standings -->
@@ -57,7 +68,7 @@
             <!-- IF postrow.osl_post_results.GROUP --> · {L_OSL_COL_GROUP}: {postrow.osl_post_results.GROUP}<!-- ENDIF -->
             <br />
             <!-- BEGIN postrow.osl_post_results.fields -->
-            {postrow.osl_post_results.fields.NAME}: <strong>{postrow.osl_post_results.fields.VALUE}</strong>
+            {postrow.osl_post_results.fields.NAME}: <strong>{postrow.osl_post_results.fields.VALUE}</strong><!-- IF postrow.osl_post_results.fields.HAS_TENX --> ({L_OSL_TENX}: {postrow.osl_post_results.fields.TENX})<!-- ENDIF -->
             <!-- END postrow.osl_post_results.fields -->
             <br /><strong>{L_OSL_COL_TOTAL}: {postrow.osl_post_results.TOTAL}</strong>
         </p>

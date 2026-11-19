@@ -140,6 +140,32 @@ class main_listener implements EventSubscriberInterface
         return $dt->setTime($at_noon ? 12 : 0, 0)->getTimestamp();
     }
 
+    /**
+     * Always derive the 10X limit from the maximum score (10 points per shot).
+     * Series using 10X must have a positive maximum divisible by ten.
+     */
+    protected function tenx_shot_limit(array $field): int
+    {
+        $calculated = (float) ($field['max'] ?? 0) / 10.0;
+        if (is_finite($calculated) && $calculated >= 1 && $calculated <= 10000 && abs($calculated - round($calculated)) < 0.0000001)
+        {
+            return (int) round($calculated);
+        }
+
+        return 0;
+    }
+
+    /** Historical series may contain a now-unused, manually entered shot count. */
+    protected function comparable_fields_schema(array $fields): array
+    {
+        foreach ($fields as &$field)
+        {
+            unset($field['shots']);
+        }
+        unset($field);
+        return $fields;
+    }
+
     /** Read editable discipline definitions, preserving stable IDs on first-post edits. */
     protected function posted_competitions(): array
     {
@@ -148,6 +174,7 @@ class main_listener implements EventSubscriberInterface
         $field_names = $this->request->variable('osl_comp_field_name', [['']], true);
         $field_mins = $this->request->variable('osl_comp_field_min', [[0.0]]);
         $field_maxs = $this->request->variable('osl_comp_field_max', [[0.0]]);
+        $field_tenx = $this->request->variable('osl_comp_field_tenx', [[0]]);
         $output = [];
         foreach ($names as $slot => $name)
         {
@@ -170,11 +197,17 @@ class main_listener implements EventSubscriberInterface
                 $field_name = trim((string) $field_name);
                 if ($field_name !== '')
                 {
-                    $fields[] = [
+                    $definition = [
                         'name' => $field_name,
                         'min' => (float) ($field_mins[$slot][$field_slot] ?? 0),
                         'max' => (float) ($field_maxs[$slot][$field_slot] ?? 0),
                     ];
+                    // Fields without 10X keep their existing JSON representation.
+                    if (!empty($field_tenx[$slot][$field_slot]))
+                    {
+                        $definition['ten_x_enabled'] = true;
+                    }
+                    $fields[] = $definition;
                 }
             }
             $output[] = [
@@ -290,6 +323,7 @@ class main_listener implements EventSubscriberInterface
                         'NAME' => $this->e($field['name']),
                         'MIN' => $field['min'],
                         'MAX' => $field['max'],
+                        'TENX_ENABLED' => !empty($field['ten_x_enabled']),
                     ]);
                 }
             }
@@ -314,6 +348,7 @@ class main_listener implements EventSubscriberInterface
         $selected = $is_submitted ? $this->submitted_competition_ids() : array_keys($existing);
         $posted_dates = $this->request->variable('osl_date', ['']);
         $posted_scores = $this->request->variable('osl_score', [['']]);
+        $posted_tenx = $this->request->variable('osl_tenx', [['']]);
         $shooter_id = $mode === 'edit' ? (int) ($data['poster_id'] ?? 0) : (int) $this->user->data['user_id'];
         $group = !$league['groups_enabled'] ? '' : ($is_submitted
             ? $this->request->variable('osl_shooter_group', '', true)
@@ -327,6 +362,7 @@ class main_listener implements EventSubscriberInterface
         {
             $saved = $existing[$comp_id] ?? null;
             $scores = $saved ? (json_decode($saved['scores_data'], true) ?: []) : [];
+            $tenx_scores = $saved ? (json_decode($saved['x_scores_data'] ?? '', true) ?: []) : [];
             $date = $is_submitted ? ($posted_dates[$comp_id] ?? date('Y-m-d')) : ($saved ? $this->format_date((int) $saved['round_date']) : date('Y-m-d'));
             $this->template->assign_block_vars('osl_result_competitions', [
                 'ID' => $comp_id,
@@ -337,12 +373,19 @@ class main_listener implements EventSubscriberInterface
             foreach ($competition['fields_schema'] as $index => $field)
             {
                 $val = $is_submitted ? ($posted_scores[$comp_id][$index] ?? '') : ($scores[$field['name']] ?? '');
+                $tenx_enabled = !empty($field['ten_x_enabled']);
+                $tenx_value = $is_submitted
+                    ? ($posted_tenx[$comp_id][$index] ?? '0')
+                    : ($tenx_scores[$field['name']] ?? 0);
                 $this->template->assign_block_vars('osl_result_competitions.fields', [
                     'INDEX' => $index,
                     'NAME' => $this->e($field['name']),
                     'MIN' => $field['min'],
                     'MAX' => $field['max'],
                     'VALUE' => $this->e($val),
+                    'TENX_ENABLED' => $tenx_enabled,
+                    'TENX_MAX' => $this->tenx_shot_limit($field),
+                    'TENX_VALUE' => $this->e($tenx_value),
                 ]);
             }
         }
@@ -418,6 +461,10 @@ class main_listener implements EventSubscriberInterface
                         {
                             $errors[] = $this->language->lang('OSL_ERR_INVALID_RANGE');
                         }
+                        if (!empty($field['ten_x_enabled']) && $this->tenx_shot_limit($field) < 1)
+                        {
+                            $errors[] = $this->language->lang('OSL_ERR_TENX_SHOTS', $this->e($field['name']));
+                        }
                         if (isset($field_names[$field['name']]))
                         {
                             $errors[] = $this->language->lang('OSL_ERR_DUPLICATE_FIELD');
@@ -433,7 +480,7 @@ class main_listener implements EventSubscriberInterface
                         else
                         {
                             $current = $league['competitions'][$comp['id']];
-                            if ($current['fields_schema'] != $comp['fields_schema'] && $this->league_has_results((int) $league['league_id'], $comp['id']))
+                            if ($this->comparable_fields_schema($current['fields_schema']) != $this->comparable_fields_schema($comp['fields_schema']) && $this->league_has_results((int) $league['league_id'], $comp['id']))
                             {
                                 $errors[] = $this->language->lang('OSL_ERR_COMPETITION_LOCKED');
                             }
@@ -473,6 +520,7 @@ class main_listener implements EventSubscriberInterface
             $selected = $this->submitted_competition_ids();
             $dates = $this->request->variable('osl_date', ['']);
             $scores = $this->request->variable('osl_score', [['']]);
+            $tenx = $this->request->variable('osl_tenx', [['']]);
             $shooter_id = $mode === 'edit' ? (int) ($data['poster_id'] ?? 0) : (int) $this->user->data['user_id'];
             if ($selected && $league['groups_enabled'])
             {
@@ -524,6 +572,19 @@ class main_listener implements EventSubscriberInterface
                         (float) str_replace(',', '.', $value) > $field['max'])
                     {
                         $errors[] = $this->e($comp['title']) . ': ' . $this->language->lang('OSL_ERR_SCORE_RANGE', $this->e($field['name']), $field['min'], $field['max']);
+                    }
+                    if (!empty($field['ten_x_enabled']))
+                    {
+                        $x_value = trim((string) ($tenx[$id][$index] ?? '0'));
+                        if ($x_value === '')
+                        {
+                            $x_value = '0';
+                        }
+                        $max_x = $this->tenx_shot_limit($field);
+                        if (!ctype_digit($x_value) || (int) $x_value > $max_x)
+                        {
+                            $errors[] = $this->e($comp['title']) . ': ' . $this->language->lang('OSL_ERR_TENX_RANGE', $this->e($field['name']), $max_x);
+                        }
                     }
                 }
             }
@@ -631,6 +692,7 @@ class main_listener implements EventSubscriberInterface
         $old = $this->result_by_post($post_id);
         $dates = $this->request->variable('osl_date', ['']);
         $scores = $this->request->variable('osl_score', [['']]);
+        $tenx = $this->request->variable('osl_tenx', [['']]);
         $shooter_id = (int) $data['poster_id'];
         $group = $league['groups_enabled']
             ? trim($this->request->variable('osl_shooter_group', '', true))
@@ -653,12 +715,20 @@ class main_listener implements EventSubscriberInterface
             $date = $this->parse_date((string) ($dates[$comp_id] ?? ''), true);
             $round = $this->manager->get_round_index_for_date($date, (int) $league['start_date'], (int) $league['duration_months']);
             $score_map = [];
+            $tenx_map = [];
             $total = 0.0;
+            $total_x = 0;
             foreach ($league['competitions'][$comp_id]['fields_schema'] as $index => $field)
             {
                 $value = (float) str_replace(',', '.', (string) ($scores[$comp_id][$index] ?? '0'));
                 $score_map[$field['name']] = $value;
                 $total += $value;
+                if (!empty($field['ten_x_enabled']))
+                {
+                    $x_value = (int) ($tenx[$comp_id][$index] ?? 0);
+                    $tenx_map[$field['name']] = $x_value;
+                    $total_x += $x_value;
+                }
             }
             $sql_ary = [
                 'league_id' => (int) $league['league_id'],
@@ -669,7 +739,9 @@ class main_listener implements EventSubscriberInterface
                 'round_date' => $date,
                 'round_index' => $round,
                 'scores_data' => json_encode($score_map, JSON_UNESCAPED_UNICODE),
+                'x_scores_data' => json_encode($tenx_map, JSON_UNESCAPED_UNICODE),
                 'total_score' => round($total, 2),
+                'total_x' => $total_x,
             ];
             if (isset($old[$comp_id]))
             {
@@ -768,7 +840,12 @@ class main_listener implements EventSubscriberInterface
             $configured_best = (int) $league['best_rounds_count'];
             // 0 means all rounds count towards the best-round total.
             $effective_best = $configured_best > 0 ? min($configured_best, $duration_months) : $duration_months;
-            $post_row['OSL_BEST_TOTAL_LABEL'] = $this->e($this->language->lang('OSL_COL_TOTAL_BEST', $effective_best, $duration_months));
+            // When all league rounds count, the best total and grand total are identical.
+            $show_total_all = $effective_best < $duration_months;
+            $post_row['S_OSL_SHOW_TOTAL_ALL'] = $show_total_all;
+            $post_row['OSL_BEST_TOTAL_LABEL'] = $this->e($show_total_all
+                ? $this->language->lang('OSL_COL_TOTAL_BEST', $effective_best, $duration_months)
+                : $this->language->lang('OSL_COL_TOTAL'));
 
             // Short table headers as in the league score sheet. For leagues longer
             // than 12 months also keep the year to distinguish repeated months.
@@ -782,6 +859,7 @@ class main_listener implements EventSubscriberInterface
             {
                 $table = [
                     'NAME' => $this->e($comp['title']),
+                    'HAS_TENX' => $this->manager->competition_has_tenx($comp),
                     'HAS_STANDINGS' => !empty($this->cached_standings[$topic_id][$comp_id]),
                     'rounds' => [],
                     'standings' => [],
@@ -803,6 +881,7 @@ class main_listener implements EventSubscriberInterface
                         'GROUP' => $this->e($player['group']),
                         'USERNAME' => get_username_string('full', $player['user_id'], $player['username'], $player['user_colour']),
                         'TOTAL_BEST' => $player['total_best'],
+                        'TENX_BEST' => $player['tenx_best'],
                         'TOTAL_ALL' => $player['total_all'],
                         'STARTS' => $player['starts'],
                         'AVERAGE' => number_format($player['average'], 2, ',', ''),
@@ -810,8 +889,10 @@ class main_listener implements EventSubscriberInterface
                     ];
                     foreach ($rounds as $index => $round)
                     {
+                        $has_round = array_key_exists($index, $player['round_scores']);
                         $standing['scores'][] = [
-                            'VALUE' => array_key_exists($index, $player['round_scores']) ? $player['round_scores'][$index] : '–',
+                            'VALUE' => $has_round ? $player['round_scores'][$index] : '–',
+                            'TENX' => $has_round ? (int) ($player['round_tenx'][$index] ?? 0) : '–',
                         ];
                     }
                     $table['standings'][] = $standing;
@@ -830,6 +911,7 @@ class main_listener implements EventSubscriberInterface
                     continue;
                 }
                 $details = json_decode($result['scores_data'], true) ?: [];
+                $x_details = json_decode($result['x_scores_data'] ?? '', true) ?: [];
                 $part = [
                     'NAME' => $this->e($league['competitions'][$comp_id]['title']),
                     'ROUND' => $this->e($rounds[(int) $result['round_index']]['label'] ?? '#' . $result['round_index']),
@@ -838,9 +920,19 @@ class main_listener implements EventSubscriberInterface
                     'TOTAL' => $result['total_score'],
                     'fields' => [],
                 ];
-                foreach ($details as $name => $value)
+                foreach ($league['competitions'][$comp_id]['fields_schema'] as $field)
                 {
-                    $part['fields'][] = ['NAME' => $this->e($name), 'VALUE' => $this->e($value)];
+                    $name = $field['name'];
+                    if (!array_key_exists($name, $details))
+                    {
+                        continue;
+                    }
+                    $part['fields'][] = [
+                        'NAME' => $this->e($name),
+                        'VALUE' => $this->e($details[$name]),
+                        'HAS_TENX' => !empty($field['ten_x_enabled']),
+                        'TENX' => (int) ($x_details[$name] ?? 0),
+                    ];
                 }
                 $post_row['osl_post_results'][] = $part;
             }

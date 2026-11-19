@@ -95,8 +95,10 @@
     box-shadow: none !important;
 }
 .osl-standings table.osl-results-table thead th {
-    background: #080808 !important;
+    background: #303030 !important;
     color: #fff !important;
+    /* White grid lines separate header columns and header rows. */
+    border: 1px solid #fff !important;
 }
 .osl-standings table.osl-results-table tbody tr:nth-child(odd) > td {
     background: #d4d4d4 !important;
@@ -334,3 +336,16 @@
     background: #555 !important;
     text-decoration: none !important;
 }
+
+/* Optional 10X controls: scoped so they remain readable with other phpBB themes. */
+#osl-league-panel .osl-tenx-config,
+#osl-result-panel .osl-score-inputs,
+#osl-result-panel .osl-score-inputs label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+#osl-league-panel .osl-tenx-config { white-space: nowrap; }
+#osl-result-panel .osl-score-inputs { flex-wrap: wrap; gap: 14px; }
+#osl-result-panel .osl-tenx-result-input { width: 75px; }
+.osl-standings table.osl-results-table .osl-col-tenx { min-width: 55px; }
