@@ -31,6 +31,23 @@ services:
             - '%core.root_path%'
             - '%core.php_ext%'
 
+    tennano.osl.export_writer:
+        class: tennano\osl\service\export_writer
+
+    tennano.osl.pdf_writer:
+        class: tennano\osl\service\pdf_writer
+
+    tennano.osl.export_controller:
+        class: tennano\osl\controller\export_controller
+        arguments:
+            - '@tennano.osl.league_manager'
+            - '@tennano.osl.export_writer'
+            - '@tennano.osl.pdf_writer'
+            - '@dbal.conn'
+            - '@auth'
+            - '@user'
+            - '@language'
+
     tennano.osl.listener:
         class: tennano\osl\event\main_listener
         arguments:

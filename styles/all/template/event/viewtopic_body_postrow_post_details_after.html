@@ -1,7 +1,13 @@
 <!-- IF postrow.S_OSL_IS_FIRST_POST -->
 <div class="osl-standings">
     <div class="osl-standings-inner">
-        <h3>{postrow.OSL_LEAGUE_TITLE}</h3>
+        <div class="osl-standings-heading">
+            <h3>{postrow.OSL_LEAGUE_TITLE}</h3>
+            <div class="osl-export-actions" aria-label="{L_OSL_EXPORT_LABEL}">
+                <a class="osl-export-button" href="{postrow.U_OSL_EXPORT_PDF}" title="{L_OSL_EXPORT_PDF}">{L_OSL_EXPORT_PDF}</a>
+                <a class="osl-export-button" href="{postrow.U_OSL_EXPORT_CSV}" title="{L_OSL_EXPORT_CSV}">{L_OSL_EXPORT_CSV}</a>
+            </div>
+        </div>
         <!-- BEGIN postrow.osl_tables -->
         <h4>{postrow.osl_tables.NAME}</h4>
         <!-- IF postrow.osl_tables.HAS_STANDINGS -->

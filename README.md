@@ -107,3 +107,16 @@ and round is enforced regardless of when it is submitted. Existing results
 can be edited without opening new late submissions. The setting is locked
 after results have been recorded. Migration `m4_extension_days` preserves
 existing data and defaults old leagues to 0 extra days.
+
+
+### Exporting complete league standings
+
+The first post of a league provides **PDF** and **CSV** download links beside
+the league title. Each download contains all competitions:
+
+- PDF: landscape A3 pages with repeated ranking columns and horizontal month splits;
+  supports Polish characters when the server provides Arial or DejaVu Sans.
+- CSV: UTF-8 with BOM, semicolon-separated sections for each competition.
+
+Exports use the same ranking service as the on-screen tables and require read
+permission to the parent forum. No database migration is needed.

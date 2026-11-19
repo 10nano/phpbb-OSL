@@ -932,6 +932,9 @@ class main_listener implements EventSubscriberInterface
         {
             $post_row['S_OSL_IS_FIRST_POST'] = true;
             $post_row['OSL_LEAGUE_TITLE'] = $this->e($league['title']);
+            // One export group for the entire league, not one per competition.
+            $post_row['U_OSL_EXPORT_CSV'] = $this->controller_helper->route('tennano_osl_export', ['topic_id' => $topic_id, 'format' => 'csv']);
+            $post_row['U_OSL_EXPORT_PDF'] = $this->controller_helper->route('tennano_osl_export', ['topic_id' => $topic_id, 'format' => 'pdf']);
             $post_row['S_OSL_HAS_GROUPS'] = (bool) $league['groups_enabled'];
             $duration_months = (int) $league['duration_months'];
             $configured_best = (int) $league['best_rounds_count'];

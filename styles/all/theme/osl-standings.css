@@ -412,3 +412,40 @@
 #osl-result-panel .osl-previous-period-choice:has(input:disabled) {
     color: #777 !important;
 }
+
+/* One set of downloads for the entire league, aligned with the league heading. */
+.osl-standings .osl-standings-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 0 0 12px;
+}
+.osl-standings .osl-standings-heading h3 {
+    margin: 0 !important;
+}
+.osl-standings .osl-export-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.osl-standings .osl-export-button {
+    display: inline-block;
+    padding: 6px 10px;
+    background: #303030 !important;
+    border: 1px solid #333 !important;
+    color: #fff !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    text-decoration: none !important;
+    white-space: nowrap;
+}
+.osl-standings .osl-export-button:hover,
+.osl-standings .osl-export-button:focus {
+    background: #555 !important;
+    color: #fff !important;
+    text-decoration: none !important;
+}
