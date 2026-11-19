@@ -129,6 +129,25 @@ class main_listener implements EventSubscriberInterface
         return (new \DateTimeImmutable('@' . $timestamp))->setTimezone(new \DateTimeZone('Europe/Warsaw'))->format('Y-m-d');
     }
 
+    /** League configuration accepts a month and year, never a day. */
+    protected function parse_start_month(string $month): int
+    {
+        if (!preg_match('/^[0-9]{4}-(0[1-9]|1[0-2])$/D', $month))
+        {
+            return 0;
+        }
+        $zone = new \DateTimeZone('Europe/Warsaw');
+        $dt = \DateTimeImmutable::createFromFormat('!Y-m-d', $month . '-01', $zone);
+        return ($dt && $dt->format('Y-m') === $month && $dt->getTimestamp() > 0)
+            ? $dt->getTimestamp()
+            : 0;
+    }
+
+    protected function format_start_month(int $timestamp): string
+    {
+        return (new \DateTimeImmutable('@' . $timestamp))->setTimezone(new \DateTimeZone('Europe/Warsaw'))->format('Y-m');
+    }
+
     protected function parse_date(string $date, bool $at_noon = false): int
     {
         $zone = new \DateTimeZone('Europe/Warsaw');
@@ -303,7 +322,9 @@ class main_listener implements EventSubscriberInterface
 
         if (($mode === 'post' || $is_edit_first) && $this->creator_permissions->can_create($forum_id))
         {
-            $start = $this->request->variable('osl_start_date', $league ? $this->format_date((int) $league['start_date']) : date('Y') . '-01-01');
+            $start = $this->request->variable('osl_start_date', $league
+                ? $this->format_start_month((int) $league['start_date'])
+                : $this->format_start_month(time()));
             $this->template->assign_vars([
                 'S_OSL_CAN_CREATE_LEAGUE' => true,
                 'OSL_ENABLED' => $this->request->is_set_post('osl_form_league') ? $this->request->is_set_post('osl_enabled') : (bool) $league,
@@ -376,7 +397,7 @@ class main_listener implements EventSubscriberInterface
         $shooter_id = $mode === 'edit' ? (int) ($data['poster_id'] ?? 0) : (int) $this->user->data['user_id'];
 
         // Current and previous-round availability is computed on the server,
-        // using league boundaries rather than calendar-month assumptions.
+        // using full calendar-month boundaries in Europe/Warsaw.
         $windows = $this->manager->get_submission_periods($league, time());
         $current_round = (int) $windows['current'];
         $previous_round = (int) $windows['previous'];
@@ -491,7 +512,7 @@ class main_listener implements EventSubscriberInterface
                 {
                     $errors[] = $this->language->lang('OSL_ERR_NO_TITLE');
                 }
-                $start = $this->parse_date($this->request->variable('osl_start_date', ''));
+                $start = $this->parse_start_month($this->request->variable('osl_start_date', ''));
                 if (!$start)
                 {
                     $errors[] = $this->language->lang('OSL_ERR_DATE_INVALID');
@@ -567,8 +588,8 @@ class main_listener implements EventSubscriberInterface
                     $league_id = (int) $league['league_id'];
                     if ($this->league_has_results($league_id))
                     {
-                        if ($start !== (int) $league['start_date'] || $duration !== (int) $league['duration_months']
-                            || $extension_days !== (int) ($league['extension_days'] ?? 0))
+                        if ($this->format_start_month($start) !== $this->format_start_month((int) $league['start_date'])
+                            || $duration !== (int) $league['duration_months'])
                         {
                             $errors[] = $this->language->lang('OSL_ERR_SCHEDULE_LOCKED');
                         }
@@ -731,7 +752,7 @@ class main_listener implements EventSubscriberInterface
                 'league_author_id' => $league ? (int) $league['league_author_id'] : (int) $data['poster_id'],
                 'title' => $this->request->variable('osl_title', '', true),
                 'short_name' => $this->request->variable('osl_short_name', '', true),
-                'start_date' => $this->parse_date($this->request->variable('osl_start_date', '')),
+                'start_date' => $this->parse_start_month($this->request->variable('osl_start_date', '')),
                 'duration_months' => $this->request->variable('osl_duration_months', 12),
                 'best_rounds_count' => $this->request->variable('osl_best_rounds', 8),
                 'extension_days' => $this->request->variable('osl_extension_days', 0),

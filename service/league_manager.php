@@ -21,23 +21,19 @@ class league_manager
         $this->results_table = $results_table;
     }
 
-    /** Monthly rounds, with the original start day clamped to shorter months. */
+    /** Each round is a full calendar month in the Europe/Warsaw time zone. */
     public function generate_rounds(int $start_timestamp, int $duration_months): array
     {
         $months = [1 => 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         $zone = new \DateTimeZone('Europe/Warsaw');
         $start = (new \DateTimeImmutable('@' . $start_timestamp))->setTimezone($zone);
+        // Normalize even historical start dates to the first of their month.
+        // First-of-month arithmetic handles February, leap years and year changes.
         $base = $start->modify('first day of this month')->setTime(0, 0, 0);
-        $day = (int) $start->format('j');
         $boundaries = [];
         for ($i = 0; $i <= $duration_months; $i++)
         {
-            $month = $base->modify('+' . $i . ' months');
-            $boundaries[$i] = $month->setDate(
-                (int) $month->format('Y'),
-                (int) $month->format('n'),
-                min($day, (int) $month->format('t'))
-            );
+            $boundaries[$i] = $base->modify('+' . $i . ' months');
         }
         $rounds = [];
         for ($i = 0; $i < $duration_months; $i++)
