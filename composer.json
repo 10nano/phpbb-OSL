@@ -3,7 +3,7 @@
     "type": "phpbb-extension",
     "description": "Shooting leagues with independent disciplines and monthly standings",
     "homepage": "",
-    "version": "0.2.0-dev",
+    "version": "0.3.0-dev",
     "time": "2026-10-13",
     "license": "GPL-2.0-only",
     "authors": [
