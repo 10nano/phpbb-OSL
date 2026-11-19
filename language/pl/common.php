@@ -34,6 +34,7 @@ $lang = array_merge($lang, [
 	'OSL_GROUP_HELP'           => 'Jedna nazwa dla wszystkich konkurencji w tej lidze. Przy następnym zgłoszeniu zostanie uzupełniona automatycznie; możesz ją zmienić lub wyczyścić.',
 	'OSL_ERR_GROUP_LENGTH'     => 'Nazwa grupy/klubu może mieć maksymalnie 100 znaków.',
 	'OSL_ERR_DATE_OUT_OF_RANGE'=> 'Wybrana data nie mieści się w okresie trwania ligi.',
+	'OSL_RESULT_REPORTED_THIS_MONTH' => 'wyniki w tej konkurencji zostały zgłoszone w tym miesiącu',
 	'OSL_ERR_DUPLICATE_PERIOD' => 'Ten zawodnik zgłosił już wynik w tej konkurencji i rundzie (miesiącu).',
 	'OSL_ERR_SCORE_RANGE'      => 'Wynik dla pola „%1$s” musi mieścić się w przedziale od %2$s do %3$s.',
 	'OSL_ENABLE_TENX' => 'Zliczaj 10X',

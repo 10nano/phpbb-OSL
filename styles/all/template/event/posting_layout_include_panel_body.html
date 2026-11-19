@@ -197,8 +197,15 @@ document.addEventListener('DOMContentLoaded', function () {
             </dl>
             <!-- ENDIF -->
             <!-- BEGIN osl_result_competitions -->
-            <div class="osl-result-competition panel bg2" style="padding:12px;margin:12px 0">
+            <div class="osl-result-competition panel bg2<!-- IF osl_result_competitions.REPORTED_THIS_MONTH --> osl-result-reported<!-- ENDIF -->" style="padding:12px;margin:12px 0"<!-- IF osl_result_competitions.REPORTED_THIS_MONTH --> aria-disabled="true"<!-- ENDIF -->>
                 <h4>{osl_result_competitions.NAME}</h4>
+                <!-- IF osl_result_competitions.REPORTED_THIS_MONTH -->
+                <label class="osl-result-reported-toggle">
+                    <input type="checkbox" disabled="disabled" />
+                    {L_OSL_SUBMIT_RESULT}
+                </label>
+                <p class="osl-result-reported-message"><strong>{L_OSL_RESULT_REPORTED_THIS_MONTH}</strong></p>
+                <!-- ELSE -->
                 <label>
                     <input type="checkbox" class="osl-result-toggle" name="osl_selected[]" value="{osl_result_competitions.ID}"<!-- IF osl_result_competitions.SELECTED --> checked="checked"<!-- ENDIF --> />
                     {L_OSL_SUBMIT_RESULT}
@@ -220,6 +227,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     </dl>
                     <!-- END osl_result_competitions.fields -->
                 </div>
+                <!-- ENDIF -->
             </div>
             <!-- END osl_result_competitions -->
         </fieldset>

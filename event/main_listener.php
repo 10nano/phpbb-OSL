@@ -237,6 +237,29 @@ class main_listener implements EventSubscriberInterface
         return $results;
     }
 
+    /** Competitions already reported by this shooter in the currently active round. */
+    protected function reported_competitions_for_round(int $league_id, int $user_id, int $round_index): array
+    {
+        if ($league_id <= 0 || $user_id <= 1 || $round_index <= 0)
+        {
+            return [];
+        }
+
+        $sql = 'SELECT competition_id FROM ' . $this->results_table . '
+            WHERE league_id = ' . $league_id . '
+            AND user_id = ' . $user_id . '
+            AND round_index = ' . $round_index;
+        $res = $this->db->sql_query($sql);
+        $reported = [];
+        while ($row = $this->db->sql_fetchrow($res))
+        {
+            $reported[(int) $row['competition_id']] = true;
+        }
+        $this->db->sql_freeresult($res);
+
+        return $reported;
+    }
+
     /** Current club/group is common to every competition in one league. */
     protected function get_shooter_group(int $league_id, int $user_id): string
     {
@@ -350,6 +373,24 @@ class main_listener implements EventSubscriberInterface
         $posted_scores = $this->request->variable('osl_score', [['']]);
         $posted_tenx = $this->request->variable('osl_tenx', [['']]);
         $shooter_id = $mode === 'edit' ? (int) ($data['poster_id'] ?? 0) : (int) $this->user->data['user_id'];
+
+        // Only lock new submissions. Editing an existing post must remain possible.
+        // Resolve the active round using the same date boundaries as duplicate checks.
+        $reported_competitions = [];
+        if ($mode !== 'edit')
+        {
+            $active_round = $this->manager->get_round_index_for_date(
+                time(),
+                (int) $league['start_date'],
+                (int) $league['duration_months']
+            );
+            $reported_competitions = $this->reported_competitions_for_round(
+                (int) $league['league_id'],
+                $shooter_id,
+                $active_round
+            );
+        }
+
         $group = !$league['groups_enabled'] ? '' : ($is_submitted
             ? $this->request->variable('osl_shooter_group', '', true)
             : $this->get_shooter_group((int) $league['league_id'], $shooter_id));
@@ -367,7 +408,8 @@ class main_listener implements EventSubscriberInterface
             $this->template->assign_block_vars('osl_result_competitions', [
                 'ID' => $comp_id,
                 'NAME' => $this->e($competition['title']),
-                'SELECTED' => in_array($comp_id, $selected, true),
+                'REPORTED_THIS_MONTH' => !empty($reported_competitions[$comp_id]),
+                'SELECTED' => empty($reported_competitions[$comp_id]) && in_array($comp_id, $selected, true),
                 'DATE' => $this->e($date),
             ]);
             foreach ($competition['fields_schema'] as $index => $field)

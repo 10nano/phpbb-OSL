@@ -304,6 +304,29 @@
     #osl-league-panel .osl-config-label-spacer { display: none; }
 }
 
+
+/* A shooter cannot submit the same discipline again in the active round. */
+#osl-result-panel .osl-result-competition.osl-result-reported {
+    background: #d0d0d0 !important;
+    border-color: #999 !important;
+    color: #777 !important;
+}
+#osl-result-panel .osl-result-competition.osl-result-reported h4,
+#osl-result-panel .osl-result-competition.osl-result-reported .osl-result-reported-toggle {
+    color: #777 !important;
+}
+#osl-result-panel .osl-result-reported-toggle {
+    cursor: not-allowed !important;
+}
+#osl-result-panel .osl-result-reported-toggle input {
+    cursor: not-allowed !important;
+}
+#osl-result-panel .osl-result-reported-message,
+#osl-result-panel .osl-result-reported-message strong {
+    color: #b00000 !important;
+    font-weight: 700 !important;
+}
+
 /* Forum-specific league creator management */
 .osl-creators-link { font-size: 0.6em; margin-left: 0.75em; font-weight: normal; }
 .osl-creator-admin { max-width: 850px; margin: 18px 0; padding: 20px; border: 1px solid #444; background: #f4f4f4; color: #111; font: 14px/1.5 Arial, sans-serif; }
