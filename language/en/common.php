@@ -11,6 +11,18 @@ if (empty($lang) || !is_array($lang))
 }
 
 $lang = array_merge($lang, [
+	'OSL_MONTH_JAN' => 'Jan',
+	'OSL_MONTH_FEB' => 'Feb',
+	'OSL_MONTH_MAR' => 'Mar',
+	'OSL_MONTH_APR' => 'Apr',
+	'OSL_MONTH_MAY' => 'May',
+	'OSL_MONTH_JUN' => 'Jun',
+	'OSL_MONTH_JUL' => 'Jul',
+	'OSL_MONTH_AUG' => 'Aug',
+	'OSL_MONTH_SEP' => 'Sep',
+	'OSL_MONTH_OCT' => 'Oct',
+	'OSL_MONTH_NOV' => 'Nov',
+	'OSL_MONTH_DEC' => 'Dec',
 	'OSL_TAB_LEAGUE'           => 'Shooting League',
 	'OSL_TAB_RESULT'           => 'Match Results',
 	'OSL_ENABLE_LEAGUE'        => 'Create a Shooting League in this topic',
@@ -22,6 +34,7 @@ $lang = array_merge($lang, [
 	'OSL_PREVIOUS_PERIOD' => 'Results for previous month',
 	'OSL_ERR_EXTENSION_DAYS' => 'The extension must be between 0 and 7 days.',
 	'OSL_ERR_PERIOD_CLOSED' => 'Submissions for the selected round are closed. Check the shooting date and previous-month selection.',
+	'OSL_ERR_PREVIOUS_DATE_LIMIT' => 'For late submissions, the shooting date must be between %1$s and %2$s.',
 	'OSL_RESULT_NO_OPEN_PERIOD' => 'There is no open submission period for this discipline.',
 	'OSL_BEST_ROUNDS'          => 'Number of best starts counted towards standings',
 	'OSL_GROUPS_ENABLED'       => 'Show optional “Group” column',
