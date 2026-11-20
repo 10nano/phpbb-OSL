@@ -135,6 +135,20 @@ class main_listener implements EventSubscriberInterface
         return (new \DateTimeImmutable('@' . $timestamp))->setTimezone(new \DateTimeZone('Europe/Warsaw'))->format('Y-m-d');
     }
 
+    /** For late entries, accept shooting dates only in the last N days of the previous month. */
+    protected function previous_round_earliest_date(array $round, int $extension_days): int
+    {
+        if ($extension_days <= 0)
+        {
+            return (int) $round['start_ts'];
+        }
+        $days = min(7, $extension_days);
+        $end_day = (new \DateTimeImmutable('@' . (int) $round['end_ts']))
+            ->setTimezone(new \DateTimeZone('Europe/Warsaw'))->setTime(0, 0, 0);
+        $earliest = $end_day->modify('-' . ($days - 1) . ' days')->getTimestamp();
+        return max((int) $round['start_ts'], $earliest);
+    }
+
     /** League configuration accepts a month and year, never a day. */
     protected function parse_start_month(string $month): int
     {
@@ -455,6 +469,9 @@ class main_listener implements EventSubscriberInterface
                 : ($saved ? $this->format_date((int) $saved['round_date']) : $default_date);
             $current_bounds = $windows['rounds'][$current_round] ?? null;
             $previous_bounds = $windows['rounds'][$previous_round] ?? null;
+            $previous_date_min = $previous_bounds
+                ? $this->format_date($this->previous_round_earliest_date($previous_bounds, (int) ($league['extension_days'] ?? 0)))
+                : '';
             $this->template->assign_block_vars('osl_result_competitions', [
                 'ID' => $comp_id,
                 'NAME' => $this->e($competition['title']),
@@ -468,9 +485,10 @@ class main_listener implements EventSubscriberInterface
                 'PREVIOUS_ALLOWED' => $can_previous,
                 'CURRENT_START' => $current_bounds ? $this->format_date((int) $current_bounds['start_ts']) : '',
                 'CURRENT_END' => $current_bounds ? $this->format_date((int) $current_bounds['end_ts']) : '',
-                'PREVIOUS_START' => $previous_bounds ? $this->format_date((int) $previous_bounds['start_ts']) : '',
+                'PREVIOUS_START' => $previous_date_min,
                 'PREVIOUS_END' => $previous_bounds ? $this->format_date((int) $previous_bounds['end_ts']) : '',
-                'DATE_MIN' => $chosen_bounds ? $this->format_date((int) $chosen_bounds['start_ts']) : '',
+                'DATE_MIN' => $use_previous && !$editing_existing ? $previous_date_min
+                    : ($chosen_bounds ? $this->format_date((int) $chosen_bounds['start_ts']) : ''),
                 'DATE_MAX' => $chosen_bounds ? $this->format_date((int) $chosen_bounds['end_ts']) : '',
                 'DATE' => $this->e($date),
             ]);
@@ -676,6 +694,22 @@ class main_listener implements EventSubscriberInterface
                         if (!$allowed_round || $round !== $allowed_round)
                         {
                             $errors[] = $this->e($comp['title']) . ': ' . $this->language->lang('OSL_ERR_PERIOD_CLOSED');
+                        }
+                        elseif (!empty($previous_choices[$id]))
+                        {
+                            // HTML date limits are not security checks: validate the late shooting date server-side.
+                            $previous_bounds = $windows['rounds'][$allowed_round];
+                            $earliest = $this->previous_round_earliest_date(
+                                $previous_bounds, (int) ($league['extension_days'] ?? 0)
+                            );
+                            if ($date < $earliest)
+                            {
+                                $errors[] = $this->e($comp['title']) . ': ' . $this->language->lang(
+                                    'OSL_ERR_PREVIOUS_DATE_LIMIT',
+                                    $this->format_date($earliest),
+                                    $this->format_date((int) $previous_bounds['end_ts'])
+                                );
+                            }
                         }
                     }
                     $sql = 'SELECT result_id FROM ' . $this->results_table . '
@@ -986,9 +1020,18 @@ class main_listener implements EventSubscriberInterface
             // Short table headers as in the league score sheet. For leagues longer
             // than 12 months also keep the year to distinguish repeated months.
             $table_month_names = [
-                'Jan' => 'Jan', 'Feb' => 'Feb', 'Mar' => 'Mar', 'Apr' => 'Apr',
-                'May' => 'May', 'Jun' => 'Jun', 'Jul' => 'Jul', 'Aug' => 'Aug',
-                'Sep' => 'Sep', 'Oct' => 'Oct', 'Nov' => 'Nov', 'Dec' => 'Dec',
+                'Jan' => $this->language->lang('OSL_MONTH_JAN'),
+                'Feb' => $this->language->lang('OSL_MONTH_FEB'),
+                'Mar' => $this->language->lang('OSL_MONTH_MAR'),
+                'Apr' => $this->language->lang('OSL_MONTH_APR'),
+                'May' => $this->language->lang('OSL_MONTH_MAY'),
+                'Jun' => $this->language->lang('OSL_MONTH_JUN'),
+                'Jul' => $this->language->lang('OSL_MONTH_JUL'),
+                'Aug' => $this->language->lang('OSL_MONTH_AUG'),
+                'Sep' => $this->language->lang('OSL_MONTH_SEP'),
+                'Oct' => $this->language->lang('OSL_MONTH_OCT'),
+                'Nov' => $this->language->lang('OSL_MONTH_NOV'),
+                'Dec' => $this->language->lang('OSL_MONTH_DEC'),
             ];
             $post_row['osl_tables'] = [];
             foreach ($league['competitions'] as $comp_id => $comp)
