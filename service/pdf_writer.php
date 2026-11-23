@@ -151,7 +151,7 @@ class pdf_writer
         if ($column['key'] === 'rank') { return 45.0; }
         if ($column['key'] === 'starts') { return 46.0; }
         if ($column['key'] === 'sum_x') { return 57.0; }
-        if (preg_match('/^[px]\\d+$/', $column['key'])) { return 46.0; }
+        if (preg_match('/^[px]\\d+$/', $column['key'])) { return preg_match('/\\b\\d{4}\\b/', $column['title']) ? 78.0 : 46.0; }
         return 62.0;
     }
 
