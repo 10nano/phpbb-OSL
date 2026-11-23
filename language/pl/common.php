@@ -12,6 +12,10 @@ if (empty($lang) || !is_array($lang))
 
 $lang = array_merge($lang, [
     'OSL_TEST_CLOCK_WARNING' => 'Uwaga! Włączony zegar testowy OSL',
+    'OSL_POST_MATCH_DATE' => 'Termin zawodów',
+    'OSL_POST_QUALIFIED_ROUND' => 'Zakwalifikowane do',
+    'OSL_POST_NICK' => 'Nick',
+    'OSL_POST_RESULT_SCORE' => 'wynik',
     'OSL_MONTH_JAN' => 'Sty',
     'OSL_MONTH_FEB' => 'Lut',
     'OSL_MONTH_MAR' => 'Mar',
