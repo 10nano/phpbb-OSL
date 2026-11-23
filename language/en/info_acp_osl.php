@@ -6,8 +6,8 @@ if (!defined('IN_PHPBB'))
 }
 
 $lang = array_merge($lang ?? [], [
-    'ACP_TENNANO_OSL' => 'OSL',
-    'ACP_TENNANO_OSL_CLOCK' => 'OSL test clock',
+    'ACP_TENNANO_OSL' => 'ONLINE SHOOTING LEAGUE',
+    'ACP_TENNANO_OSL_CLOCK' => 'Debugging time changes',
     'ACP_TENNANO_OSL_CLOCK_EXPLAIN' => 'Time simulation is only for testing OSL submission deadlines. It does not change Windows time, phpBB post times or any other extensions. It applies only to localhost requests (127.0.0.1 / ::1).',
     'ACP_TENNANO_OSL_CLOCK_SETTINGS' => 'Debug settings',
     'ACP_TENNANO_OSL_CLOCK_ENABLE' => 'Enable Debug',
