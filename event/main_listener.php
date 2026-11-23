@@ -1075,39 +1075,59 @@ class main_listener implements EventSubscriberInterface
         }
         elseif (!empty($this->cached_post_results[$post_id]))
         {
+            // The round labels in storage are language-neutral (e.g. "Nov 2026").
+            // Translate them only when rendering, using the viewer's phpBB language.
+            $month_keys = [
+                'Jan' => 'OSL_MONTH_JAN', 'Feb' => 'OSL_MONTH_FEB',
+                'Mar' => 'OSL_MONTH_MAR', 'Apr' => 'OSL_MONTH_APR',
+                'May' => 'OSL_MONTH_MAY', 'Jun' => 'OSL_MONTH_JUN',
+                'Jul' => 'OSL_MONTH_JUL', 'Aug' => 'OSL_MONTH_AUG',
+                'Sep' => 'OSL_MONTH_SEP', 'Oct' => 'OSL_MONTH_OCT',
+                'Nov' => 'OSL_MONTH_NOV', 'Dec' => 'OSL_MONTH_DEC',
+            ];
             $post_row['S_OSL_HAS_POST_RESULT'] = true;
-            $post_row['osl_post_results'] = [];
+            $post_row['osl_post_result_groups'] = [];
+            $group_indexes = [];
             foreach ($this->cached_post_results[$post_id] as $comp_id => $result)
             {
                 if (!isset($league['competitions'][$comp_id]))
                 {
                     continue;
                 }
-                $details = json_decode($result['scores_data'], true) ?: [];
-                $x_details = json_decode($result['x_scores_data'] ?? '', true) ?: [];
-                $part = [
-                    'NAME' => $this->e($league['competitions'][$comp_id]['title']),
-                    'ROUND' => $this->e($rounds[(int) $result['round_index']]['label'] ?? '#' . $result['round_index']),
-                    'DATE' => (new \DateTimeImmutable('@' . (int) $result['round_date']))->setTimezone(new \DateTimeZone('Europe/Warsaw'))->format('d.m.Y'),
-                    'GROUP' => $this->e($result['shooter_group']),
-                    'TOTAL' => $result['total_score'],
-                    'fields' => [],
-                ];
-                foreach ($league['competitions'][$comp_id]['fields_schema'] as $index => $field)
+
+                $round_index = (int) $result['round_index'];
+                $round_label = $rounds[$round_index]['label'] ?? '#' . $round_index;
+                $label_parts = explode(' ', $round_label, 2);
+                if (isset($month_keys[$label_parts[0]]))
                 {
-                    $name = $field['name'];
-                    if (!array_key_exists($index, $details))
-                    {
-                        continue;
-                    }
-                    $part['fields'][] = [
-                        'NAME' => $this->e($name),
-                        'VALUE' => $this->e($details[$index]),
-                        'HAS_TENX' => !empty($field['ten_x_enabled']),
-                        'TENX' => (int) ($x_details[$index] ?? 0),
+                    $round_label = $this->language->lang($month_keys[$label_parts[0]])
+                        . (isset($label_parts[1]) ? ' ' . $label_parts[1] : '');
+                }
+
+                $date = (new \DateTimeImmutable('@' . (int) $result['round_date']))
+                    ->setTimezone(new \DateTimeZone('Europe/Warsaw'))->format('d.m.Y');
+                $group = (string) $result['shooter_group'];
+                // A reply can contain results for distinct shooting dates or rounds.
+                // Keep those in separate sections rather than showing a false shared date.
+                $key = $round_index . '|' . $date . '|' . $group;
+                if (!isset($group_indexes[$key]))
+                {
+                    $group_indexes[$key] = count($post_row['osl_post_result_groups']);
+                    $post_row['osl_post_result_groups'][] = [
+                        'LEAGUE' => $this->e($league['title']),
+                        'DATE' => $date,
+                        'ROUND' => $this->e($round_label),
+                        'NICK' => $this->e((string) ($row['username'] ?? $row['post_username'] ?? '')),
+                        'GROUP' => $this->e($group),
+                        'HAS_GROUP' => !empty($league['groups_enabled']) && $group !== '',
+                        'competitions' => [],
                     ];
                 }
-                $post_row['osl_post_results'][] = $part;
+
+                $post_row['osl_post_result_groups'][$group_indexes[$key]]['competitions'][] = [
+                    'NAME' => $this->e($league['competitions'][$comp_id]['title']),
+                    'TOTAL' => number_format((float) $result['total_score'], 2, '.', ''),
+                ];
             }
         }
         $event['post_row'] = $post_row;
