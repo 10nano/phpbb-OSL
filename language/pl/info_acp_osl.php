@@ -6,8 +6,8 @@ if (!defined('IN_PHPBB'))
 }
 
 $lang = array_merge($lang ?? [], [
-    'ACP_TENNANO_OSL' => 'OSL',
-    'ACP_TENNANO_OSL_CLOCK' => 'Zegar testowy OSL',
+    'ACP_TENNANO_OSL' => 'INTERNETOWA LIGA STRZELECKA',
+    'ACP_TENNANO_OSL_CLOCK' => 'Debugowanie zmian czasu',
     'ACP_TENNANO_OSL_CLOCK_EXPLAIN' => 'Symulacja czasu służy wyłącznie do sprawdzania terminów zgłoszeń OSL. Nie zmienia zegara Windows, dat postów ani działania innych rozszerzeń phpBB. Dostępna jest tylko dla żądań z localhost (127.0.0.1 / ::1).',
     'ACP_TENNANO_OSL_CLOCK_SETTINGS' => 'Ustawienia Debug',
     'ACP_TENNANO_OSL_CLOCK_ENABLE' => 'Włącz Debug',
