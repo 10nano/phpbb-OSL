@@ -33,17 +33,22 @@ class test_clock_module
             }
 
             $enabled = (int) $request->variable('osl_test_clock_enabled', 0) === 1;
-            $date = trim((string) $request->variable('osl_test_clock_date', ''));
-            $time = trim((string) $request->variable('osl_test_clock_time', ''));
-            $parsed = test_clock::parse_local_datetime($date . ' ' . $time);
 
-            if ($parsed === null)
+            if ($enabled)
             {
-                trigger_error($language->lang('ACP_TENNANO_OSL_CLOCK_INVALID') . adm_back_link($this->u_action), E_USER_WARNING);
+                $date = trim((string) $request->variable('osl_test_clock_date', ''));
+                $time = trim((string) $request->variable('osl_test_clock_time', ''));
+                $parsed = test_clock::parse_local_datetime($date . ' ' . $time);
+
+                if ($parsed === null)
+                {
+                    trigger_error($language->lang('ACP_TENNANO_OSL_CLOCK_INVALID') . adm_back_link($this->u_action), E_USER_WARNING);
+                }
+
+                $config->set(test_clock::CONFIG_DATETIME, $parsed->format('Y-m-d H:i'));
             }
 
-            // Save the date first, then switch the clock on/off.
-            $config->set(test_clock::CONFIG_DATETIME, $parsed->format('Y-m-d H:i'));
+            // Disabling debug preserves the last valid test date and time.
             $config->set(test_clock::CONFIG_ENABLED, $enabled ? 1 : 0);
             trigger_error($language->lang('ACP_TENNANO_OSL_CLOCK_SAVED') . adm_back_link($this->u_action));
         }
