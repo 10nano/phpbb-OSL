@@ -35,8 +35,11 @@ class export_writer
             foreach ($rounds as $index => $round)
             {
                 $label = (string) $round['label'];
-                // Consistent short names with the standings shown on the forum.
-                if ($count <= 12) { $label = explode(' ', $label)[0]; }
+                // Localize the neutral month label for both PDF and CSV.
+                $parts = explode(' ', $label, 2);
+                $month = $labels['months'][$parts[0]] ?? $parts[0];
+                // Keep the year when a league contains repeated calendar months.
+                $label = $month . ($count > 12 && isset($parts[1]) ? ' ' . $parts[1] : '');
                 $columns[] = ['key' => 'p' . $index, 'title' => $label . ($hasX ? ' PKT' : ''), 'type' => 'number'];
                 if ($hasX) { $columns[] = ['key' => 'x' . $index, 'title' => $label . ' 10X', 'type' => 'number']; }
             }
