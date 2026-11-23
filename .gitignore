@@ -4,6 +4,7 @@ Desktop.ini
 .DS_Store
 
 # Temporary files
+*.ps1
 *.tmp
 *.log
 *.bak
