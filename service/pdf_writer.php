@@ -128,9 +128,9 @@ class pdf_writer
     {
         return $color . ' rg ' . sprintf('%.2F %.2F %.2F %.2F re f', $x, $y, $w, $h) . "\n";
     }
-    private function line(float $x1, float $y1, float $x2, float $y2): string
+    private function line(float $x1, float $y1, float $x2, float $y2, bool $vertical = false): string
     {
-        return '0.38 G 0.45 w ' . sprintf('%.2F %.2F m %.2F %.2F l S', $x1, $y1, $x2, $y2) . "\n";
+        return ($vertical ? '0.20 G 1.00 w ' : '0.38 G 0.45 w ') . sprintf('%.2F %.2F m %.2F %.2F l S', $x1, $y1, $x2, $y2) . "\n";
     }
     private function text(float $x, float $y, string $value, int $size = 9, string $color = '0.1'): string
     {
@@ -146,10 +146,13 @@ class pdf_writer
 
     private function column_width(array $column): float
     {
-        if ($column['key'] === 'nick') { return 135.0; }
-        if ($column['key'] === 'group') { return 105.0; }
-        if (preg_match('/^[px]\d+$/', $column['key'])) { return 58.0; }
-        return 72.0;
+        if ($column['key'] === 'nick') { return 112.0; }
+        if ($column['key'] === 'group') { return 85.0; }
+        if ($column['key'] === 'rank') { return 45.0; }
+        if ($column['key'] === 'starts') { return 46.0; }
+        if ($column['key'] === 'sum_x') { return 57.0; }
+        if (preg_match('/^[px]\\d+$/', $column['key'])) { return 46.0; }
+        return 62.0;
     }
 
     /**
@@ -192,9 +195,9 @@ class pdf_writer
             {
                 $width = $widths[$index];
                 $out .= $this->rect($x, $y, $width, $headerH, '0.18 0.18 0.18');
-                $out .= $this->text($x + 4.0, $y + 9.0,
+                $out .= $this->text($x + 3.0, $y + 9.0,
                     $this->abbreviate($column['title'], max(5, (int) ($width / 5.5))), 8, '1');
-                $out .= $this->line($x + $width, $y, $x + $width, $y + $headerH);
+                $out .= $this->line($x + $width, $y, $x + $width, $y + $headerH, true);
                 $x += $width;
             }
             $out .= $this->line($margin, $y, $x, $y);
@@ -210,9 +213,9 @@ class pdf_writer
                         $index % 2 ? '0.95 0.95 0.95' : '0.84 0.84 0.84');
                     $value = $record[$column['key']] ?? null;
                     $display = $value === null ? '-' : (string) $value;
-                    $out .= $this->text($x + 4.0, $y + 7.0,
+                    $out .= $this->text($x + 3.0, $y + 7.0,
                         $this->abbreviate($display, max(4, (int) ($width / 5.0))), 8);
-                    $out .= $this->line($x + $width, $y, $x + $width, $y + $rowH);
+                    $out .= $this->line($x + $width, $y, $x + $width, $y + $rowH, true);
                     $x += $width;
                 }
                 $out .= $this->line($margin, $y, $x, $y);
