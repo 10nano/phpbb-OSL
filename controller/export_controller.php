@@ -86,6 +86,20 @@ class export_controller
             'all' => $this->language->lang('OSL_COL_TOTAL_ALL'),
             'average' => $this->language->lang('OSL_COL_AVG'),
             'starts' => $this->language->lang('OSL_COL_STARTS'),
+            'months' => [
+                'Jan' => $this->language->lang('OSL_MONTH_JAN'),
+                'Feb' => $this->language->lang('OSL_MONTH_FEB'),
+                'Mar' => $this->language->lang('OSL_MONTH_MAR'),
+                'Apr' => $this->language->lang('OSL_MONTH_APR'),
+                'May' => $this->language->lang('OSL_MONTH_MAY'),
+                'Jun' => $this->language->lang('OSL_MONTH_JUN'),
+                'Jul' => $this->language->lang('OSL_MONTH_JUL'),
+                'Aug' => $this->language->lang('OSL_MONTH_AUG'),
+                'Sep' => $this->language->lang('OSL_MONTH_SEP'),
+                'Oct' => $this->language->lang('OSL_MONTH_OCT'),
+                'Nov' => $this->language->lang('OSL_MONTH_NOV'),
+                'Dec' => $this->language->lang('OSL_MONTH_DEC'),
+            ],
         ];
         $rounds = $this->manager->generate_rounds((int) $league['start_date'], (int) $league['duration_months']);
         $standings = $this->manager->get_league_standings($league);
