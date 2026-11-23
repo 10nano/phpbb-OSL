@@ -137,6 +137,25 @@ class pdf_writer
         $value = preg_replace('/[\x00-\x1F]/u', ' ', $value) ?? '';
         return $color . ' g BT /F1 ' . $size . ' Tf ' . sprintf('1 0 0 1 %.2F %.2F Tm ', $x, $y) . $this->hex_text($value) . " Tj ET\n";
     }
+    /** Measure a numeric rank so its right edge can align with the column. */
+    private function rank_width(string $value, int $font_size = 8): float
+    {
+        // Helvetica's tabular digits are 556/1000 em wide.
+        if ($this->fontData === '' || !$this->metricCount)
+        {
+            return strlen($value) * $font_size * 0.556;
+        }
+
+        $width = 0.0;
+        foreach (str_split($value) as $char)
+        {
+            $glyph = $this->glyph(ord($char));
+            $index = min($glyph, $this->metricCount - 1);
+            $width += $this->u16($this->metrics + $index * 4) * $font_size / $this->upem;
+        }
+        return $width;
+    }
+
     private function abbreviate(string $value, int $max): string
     {
         $chars = preg_split('//u', $value, -1, PREG_SPLIT_NO_EMPTY);
@@ -146,8 +165,8 @@ class pdf_writer
 
     private function column_width(array $column): float
     {
-        if ($column['key'] === 'nick') { return 112.0; }
-        if ($column['key'] === 'group') { return 85.0; }
+        if ($column['key'] === 'nick') { return 90.0; }
+        if ($column['key'] === 'group') { return 65.0; }
         if ($column['key'] === 'rank') { return 45.0; }
         if ($column['key'] === 'starts') { return 46.0; }
         if ($column['key'] === 'sum_x') { return 57.0; }
@@ -213,8 +232,12 @@ class pdf_writer
                         $index % 2 ? '0.95 0.95 0.95' : '0.84 0.84 0.84');
                     $value = $record[$column['key']] ?? null;
                     $display = $value === null ? '-' : (string) $value;
-                    $out .= $this->text($x + 3.0, $y + 7.0,
-                        $this->abbreviate($display, max(4, (int) ($width / 5.0))), 8);
+                    $display = $this->abbreviate($display, max(4, (int) ($width / 5.0)));
+                    // Align numeric ranking to the right; other columns stay left-aligned.
+                    $text_x = $column['key'] === 'rank' && ctype_digit($display)
+                        ? $x + $width - 3.0 - $this->rank_width($display)
+                        : $x + 3.0;
+                    $out .= $this->text($text_x, $y + 7.0, $display, 8);
                     $out .= $this->line($x + $width, $y, $x + $width, $y + $rowH, true);
                     $x += $width;
                 }
