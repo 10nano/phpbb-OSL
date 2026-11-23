@@ -67,18 +67,21 @@
 <!-- IF postrow.S_OSL_HAS_POST_RESULT -->
 <div class="osl-post-results">
     <div class="osl-post-results-inner">
-        <h4>{L_OSL_POST_RESULT_HEADER}</h4>
-        <!-- BEGIN postrow.osl_post_results -->
-        <p>
-            <strong>{postrow.osl_post_results.NAME}</strong> – {postrow.osl_post_results.ROUND} ({postrow.osl_post_results.DATE})
-            <!-- IF postrow.osl_post_results.GROUP --> · {L_OSL_COL_GROUP}: {postrow.osl_post_results.GROUP}<!-- ENDIF -->
-            <br />
-            <!-- BEGIN postrow.osl_post_results.fields -->
-            {postrow.osl_post_results.fields.NAME}: <strong>{postrow.osl_post_results.fields.VALUE}</strong><!-- IF postrow.osl_post_results.fields.HAS_TENX --> ({L_OSL_TENX}: {postrow.osl_post_results.fields.TENX})<!-- ENDIF -->
-            <!-- END postrow.osl_post_results.fields -->
-            <br /><strong>{L_OSL_COL_TOTAL}: {postrow.osl_post_results.TOTAL}</strong>
-        </p>
-        <!-- END postrow.osl_post_results -->
+        <!-- BEGIN postrow.osl_post_result_groups -->
+        <div class="osl-post-result-group">
+            <h4>{postrow.osl_post_result_groups.LEAGUE}</h4>
+            <p>
+                {L_OSL_POST_MATCH_DATE}: {postrow.osl_post_result_groups.DATE}<br />
+                {L_OSL_POST_QUALIFIED_ROUND}: {postrow.osl_post_result_groups.ROUND}<br />
+                {L_OSL_POST_NICK}: {postrow.osl_post_result_groups.NICK}<!-- IF postrow.osl_post_result_groups.HAS_GROUP --> {L_OSL_COL_GROUP}: {postrow.osl_post_result_groups.GROUP}<!-- ENDIF -->
+            </p>
+            <p>
+                <!-- BEGIN postrow.osl_post_result_groups.competitions -->
+                {postrow.osl_post_result_groups.competitions.NAME} – {L_OSL_POST_RESULT_SCORE}: {postrow.osl_post_result_groups.competitions.TOTAL}<br />
+                <!-- END postrow.osl_post_result_groups.competitions -->
+            </p>
+        </div>
+        <!-- END postrow.osl_post_result_groups -->
     </div>
 </div>
 <!-- ENDIF -->
