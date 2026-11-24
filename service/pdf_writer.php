@@ -222,8 +222,11 @@ class pdf_writer
             {
                 $width = $widths[$index];
                 $out .= $this->rect($x, $y, $width, $headerH, '0.18 0.18 0.18');
-                $out .= $this->text($x + 3.0, $y + 9.0,
-                    $this->abbreviate($column['title'], max(5, (int) ($width / 5.5))), 8, '1');
+                // Leave the first column unchanged; indent every other header by 12 pt.
+                $header_padding = $index === 0 ? 3.0 : 15.0;
+                $out .= $this->text($x + $header_padding, $y + 9.0,
+                    $this->abbreviate($column['title'],
+                        max(2, (int) (($width - $header_padding - 3.0) / 5.5))), 8, '1');
                 // The full-height separator is drawn after all cell backgrounds.
                 $x += $width;
             }
@@ -240,11 +243,15 @@ class pdf_writer
                         $index % 2 ? '0.95 0.95 0.95' : '0.84 0.84 0.84');
                     $value = $record[$column['key']] ?? null;
                     $display = $value === null ? '-' : (string) $value;
-                    $display = $this->abbreviate($display, max(4, (int) ($width / 5.0)));
-                    // Align numeric ranking to the right; other columns stay left-aligned.
-                    $text_x = $column['key'] === 'rank' && ctype_digit($display)
+                    // Indent non-ranking columns 12 pt further without moving rank numbers.
+                    $is_rank = $column['key'] === 'rank';
+                    $padding = $is_rank ? 3.0 : 15.0;
+                    $display = $this->abbreviate($display,
+                        max(2, (int) (($width - $padding - 3.0) / 5.0)));
+                    // Keep numeric rankings right-aligned at their existing position.
+                    $text_x = $is_rank && ctype_digit($display)
                         ? $x + $width - 18.0 - $this->rank_width($display)
-                        : $x + 3.0;
+                        : $x + $padding;
                     $out .= $this->text($text_x, $y + 7.0, $display, 8);
                     // The full-height separator is drawn after all cell backgrounds.
                     $x += $width;
