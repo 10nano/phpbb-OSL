@@ -273,6 +273,45 @@
     max-width: 100%;
     padding: 3px 5px;
 }
+/* Optional league instructions use the full available width of the form. */
+#osl-league-panel .osl-instructions-editor {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 8px 0 16px;
+}
+#osl-league-panel .osl-instructions-editor > label {
+    display: block;
+    font-weight: 700;
+    margin: 0 0 6px;
+}
+#osl-league-panel textarea.osl-instructions-input {
+    display: block;
+    width: 100%;
+    min-height: 145px;
+    box-sizing: border-box;
+    resize: vertical;
+    padding: 8px;
+    background: #fff !important;
+    color: #101010 !important;
+    border: 1px solid #555 !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    line-height: 1.45;
+}
+#osl-league-panel .osl-instructions-editor p { margin: 6px 0; }
+
+/* The instructions remain a placeholder, not editable/saved post content. */
+textarea#message.osl-reply-instructions-placeholder::placeholder {
+    color: #b00000 !important;
+    font-weight: 700 !important;
+    opacity: 1 !important;
+    white-space: pre-wrap;
+}
+textarea#message.osl-reply-instructions-placeholder::-webkit-input-placeholder {
+    color: #b00000 !important;
+    font-weight: 700 !important;
+    opacity: 1 !important;
+}
+
 #osl-league-panel .osl-form-input-title { width: 410px; }
 #osl-league-panel .osl-form-input-short { width: 190px; }
 #osl-league-panel .osl-form-input-date { width: 150px; }
