@@ -169,6 +169,70 @@ class pdf_writer
         return implode('', array_slice($chars, 0, max(0, $max - 1))) . '…';
     }
 
+    /** Width of text at a given font size, in unscaled PDF points. */
+    private function text_width(string $value, int $size = 8): float
+    {
+        if ($this->fontData === '' || !$this->metricCount)
+        {
+            $plain = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+            return strlen($plain === false ? $value : $plain) * $size * 0.56;
+        }
+
+        $binary = @iconv('UTF-8', 'UTF-16BE//IGNORE', $value);
+        if ($binary === false) { return 0.0; }
+        $width = 0.0;
+        foreach (unpack('n*', $binary) ?: [] as $code)
+        {
+            $glyph = $this->glyph($code);
+            $index = min($glyph, $this->metricCount - 1);
+            $width += $this->u16($this->metrics + $index * 4) * $size / $this->upem;
+        }
+        return $width;
+    }
+
+    /** Keep a header legible within its available cell width. */
+    private function fit_header_text(string $value, float $available): string
+    {
+        if ($this->text_width($value) <= $available) { return $value; }
+        $chars = preg_split('//u', $value, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        while ($chars)
+        {
+            array_pop($chars);
+            $candidate = implode('', $chars) . '…';
+            if ($this->text_width($candidate) <= $available) { return $candidate; }
+        }
+        return '';
+    }
+
+    /** Wrap column headings onto at most two lines rather than cutting words. */
+    private function header_lines(string $title, float $available): array
+    {
+        $words = preg_split('/\s+/u', trim($title), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $lines = [];
+        $current = '';
+        foreach ($words as $word)
+        {
+            $candidate = $current === '' ? $word : $current . ' ' . $word;
+            if ($this->text_width($candidate) <= $available)
+            {
+                $current = $candidate;
+            }
+            else
+            {
+                if ($current !== '') { $lines[] = $current; }
+                $current = $word;
+            }
+        }
+        if ($current !== '') { $lines[] = $current; }
+        if (count($lines) > 2)
+        {
+            $lines = [$lines[0], implode(' ', array_slice($lines, 1))];
+        }
+        return array_map(function ($line) use ($available) {
+            return $this->fit_header_text($line, $available);
+        }, $lines);
+    }
+
     private function column_width(array $column): float
     {
         if ($column['key'] === 'nick') { return 90.0; }
@@ -188,7 +252,7 @@ class pdf_writer
     {
         $pages = [];
         $margin = 40.0;
-        $headerH = 26.0;
+        $headerH = 34.0;
         $rowH = 21.0;
 
         foreach ($report['competitions'] as $competition)
@@ -207,7 +271,10 @@ class pdf_writer
             // The minimum is the original A3 landscape canvas. Wider/taller
             // standings use a larger page instead of cutting months or rows.
             $pageW = max(1191.0, $tableW + 2 * $margin);
-            $pageH = max(842.0, 185.0 + $headerH + $rowH * count($rows));
+            // Enlarge compact tables uniformly to use the printable A3 width.
+            // Limit enlargement for short leagues with only a few columns.
+            $tableScale = min(1.25, ($pageW - 2 * $margin) / max(1.0, $tableW));
+            $pageH = max(842.0, 185.0 + $tableScale * ($headerH + $rowH * count($rows)));
             $y = $pageH - 138.0;
             $x = $margin;
 
@@ -218,15 +285,31 @@ class pdf_writer
 
             $headerBottom = $y;
 
+            // Scale the table around its upper-left corner; titles, date and
+            // footer remain their original size and position on the page.
+            $tableTop = $headerBottom + $headerH;
+            $out .= sprintf("q %.6F 0 0 %.6F %.2F %.2F cm\n",
+                $tableScale, $tableScale,
+                (1.0 - $tableScale) * $margin, (1.0 - $tableScale) * $tableTop);
+
             foreach ($columns as $index => $column)
             {
                 $width = $widths[$index];
                 $out .= $this->rect($x, $y, $width, $headerH, '0.18 0.18 0.18');
                 // Leave the first column unchanged; indent every other header by 12 pt.
                 $header_padding = $index === 0 ? 3.0 : 15.0;
-                $out .= $this->text($x + $header_padding, $y + 9.0,
-                    $this->abbreviate($column['title'],
-                        max(2, (int) (($width - $header_padding - 3.0) / 5.5))), 8, '1');
+                $headingLines = $this->header_lines(
+                    (string) $column['title'], $width - $header_padding - 3.0
+                );
+                if (count($headingLines) > 1)
+                {
+                    $out .= $this->text($x + $header_padding, $y + 19.0, $headingLines[0], 8, '1');
+                    $out .= $this->text($x + $header_padding, $y + 8.0, $headingLines[1], 8, '1');
+                }
+                elseif ($headingLines)
+                {
+                    $out .= $this->text($x + $header_padding, $y + 13.0, $headingLines[0], 8, '1');
+                }
                 // The full-height separator is drawn after all cell backgrounds.
                 $x += $width;
             }
@@ -271,6 +354,7 @@ class pdf_writer
             }
             $out .= $this->vertical_separator($separatorX, $y, $headerBottom, false);
             $out .= $this->vertical_separator($separatorX, $headerBottom, $headerBottom + $headerH, true);
+            $out .= "Q\n";
 
             $out .= $this->text($margin, 32.0, 'OSL | ' . $competition['title'], 9);
             $pages[] = ['content' => $out, 'width' => $pageW, 'height' => $pageH];
