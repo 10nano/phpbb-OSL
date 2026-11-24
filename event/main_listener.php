@@ -366,7 +366,10 @@ class main_listener implements EventSubscriberInterface
             $this->template->assign_vars([
                 'S_OSL_CAN_CREATE_LEAGUE' => true,
                 'OSL_ENABLED' => $this->request->is_set_post('osl_form_league') ? $this->request->is_set_post('osl_enabled') : (bool) $league,
-                'OSL_TITLE' => $this->e($this->request->variable('osl_title', $league['title'] ?? '', true)),
+                // phpBB already prepares this subject for safe template output.
+                // The live preview is updated from the native #subject field.
+                'OSL_TITLE' => (string) ($data['post_subject'] ?? ''),
+                'OSL_HAS_TOPIC_SUBJECT' => trim((string) ($data['post_subject'] ?? '')) !== '',
                 'OSL_SHORT_NAME' => $this->e($this->request->variable('osl_short_name', $league['short_name'] ?? '', true)),
                 'OSL_START_DATE' => $this->e($start),
                 'OSL_DURATION_MONTHS' => $this->request->variable('osl_duration_months', (int) ($league['duration_months'] ?? 12)),
@@ -577,7 +580,7 @@ class main_listener implements EventSubscriberInterface
                 {
                     $errors[] = $this->language->lang('OSL_ERR_PERMISSION');
                 }
-                $title = trim($this->request->variable('osl_title', '', true));
+                $title = trim((string) ($data['post_subject'] ?? ''));
                 if ($title === '')
                 {
                     $errors[] = $this->language->lang('OSL_ERR_NO_TITLE');
@@ -834,7 +837,8 @@ class main_listener implements EventSubscriberInterface
             $sql_ary = [
                 'topic_id' => $topic_id,
                 'league_author_id' => $league ? (int) $league['league_author_id'] : (int) $data['poster_id'],
-                'title' => $this->request->variable('osl_title', '', true),
+                // Use exactly the subject submitted and accepted by phpBB.
+                'title' => (string) $event['subject'],
                 'short_name' => $this->request->variable('osl_short_name', '', true),
                 'start_date' => $this->parse_start_month($this->request->variable('osl_start_date', '')),
                 'duration_months' => $this->request->variable('osl_duration_months', 12),
