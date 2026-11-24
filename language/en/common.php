@@ -16,6 +16,7 @@ $lang = array_merge($lang, [
     'OSL_POST_QUALIFIED_ROUND' => 'Qualified for',
     'OSL_POST_NICK' => 'Username',
     'OSL_POST_RESULT_SCORE' => 'result',
+    'OSL_POST_VIEW_STANDINGS' => 'View the current Standings Table',
     'OSL_MONTH_JAN' => 'Jan',
     'OSL_MONTH_FEB' => 'Feb',
     'OSL_MONTH_MAR' => 'Mar',
