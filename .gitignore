@@ -15,5 +15,8 @@ Desktop.ini
 /.idea/
 /.vscode/
 
+# Installation dir
+/INSTALL/
+
 # Local archives
 *.zip
