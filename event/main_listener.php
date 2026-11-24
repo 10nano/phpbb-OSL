@@ -486,6 +486,9 @@ class main_listener implements EventSubscriberInterface
             $event['page_data'] = $page_data;
         }
 
+        // Prefix discipline headings only in the result-entry form.
+        // Competition names in storage, standings and exports stay unchanged.
+        $short_league_name = trim((string) ($league['short_name'] ?? ''));
         foreach ($league['competitions'] as $comp_id => $competition)
         {
             $saved = $existing[$comp_id] ?? null;
@@ -514,7 +517,7 @@ class main_listener implements EventSubscriberInterface
                 : '';
             $this->template->assign_block_vars('osl_result_competitions', [
                 'ID' => $comp_id,
-                'NAME' => $this->e($competition['title']),
+                'NAME' => $this->e(($short_league_name !== '' ? $short_league_name . ' ' : '') . $competition['title']),
                 'REPORTED_THIS_MONTH' => !$may_submit,
                 'NO_OPEN_PERIOD' => $current_round === 0 && $previous_round === 0,
                 'SELECTED' => $may_submit && in_array($comp_id, $selected, true),
