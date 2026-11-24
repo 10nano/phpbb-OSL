@@ -240,6 +240,14 @@
     align-items: center;
     margin: 12px 0;
 }
+/* Remind the league creator to link to the rules in the first post. */
+#osl-league-panel .osl-regulations-reminder {
+    margin-top: -4px;
+}
+#osl-league-panel .osl-regulations-reminder > span:last-child {
+    color: #b00000 !important;
+    line-height: 1.4;
+}
 #osl-league-panel .osl-config-row > label,
 #osl-league-panel .osl-config-row > .osl-config-label,
 #osl-league-panel .osl-comp-name-row > label {
