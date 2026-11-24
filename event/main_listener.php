@@ -1086,6 +1086,11 @@ class main_listener implements EventSubscriberInterface
                 'Nov' => 'OSL_MONTH_NOV', 'Dec' => 'OSL_MONTH_DEC',
             ];
             $post_row['S_OSL_HAS_POST_RESULT'] = true;
+            // Resolve the first post directly so the table link also works
+            // when a result is displayed on a later topic page.
+            $post_row['U_OSL_STANDINGS'] = $this->e(
+                append_sid('viewtopic.php', 'p=' . (int) $topic['topic_first_post_id']) . '#osl-standings'
+            );
             $post_row['osl_post_result_groups'] = [];
             $group_indexes = [];
             foreach ($this->cached_post_results[$post_id] as $comp_id => $result)
