@@ -598,8 +598,7 @@ class main_listener implements EventSubscriberInterface
                 {
                     $errors[] = $this->language->lang('OSL_ERR_LIMITS');
                 }
-                if ($this->request->is_set_post('osl_instructions_enabled')
-                    && utf8_strlen($this->request->untrimmed_variable('osl_reply_instructions', '', true)) > 10000)
+                if (utf8_strlen($this->request->untrimmed_variable('osl_reply_instructions', '', true)) > 10000)
                 {
                     $errors[] = $this->language->lang('OSL_ERR_REPLY_INSTRUCTIONS_LENGTH');
                 }
