@@ -37,6 +37,7 @@ $lang = array_merge($lang, [
 	'OSL_TAB_RESULT'           => 'Match Result',
 	'OSL_ENABLE_LEAGUE'        => 'Create a Shooting League in this topic',
 	'OSL_TITLE'                => 'Full league name',
+	'OSL_SUBJECT_REQUIRED_HINT' => 'Enter the post subject',
 	'OSL_SHORT_NAME'           => 'Short name',
 	'OSL_START_DATE'           => 'League start (month and year)',
 	'OSL_DURATION_MONTHS'      => 'Duration (months)',
