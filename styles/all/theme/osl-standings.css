@@ -54,6 +54,15 @@
     margin: 8px 0;
     line-height: 1.45 !important;
 }
+
+/* Separate the navigation link from the submitted scores by a blank line. */
+.osl-post-results .osl-view-standings-link {
+    margin-top: 1.6em !important;
+}
+.osl-post-results .osl-view-standings-link a {
+    font-weight: 700 !important;
+    text-decoration: underline !important;
+}
 .osl-standings .osl-results-scroll {
     max-width: 100%;
     overflow-x: auto;
