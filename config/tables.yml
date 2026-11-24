@@ -1,5 +1,0 @@
-parameters:
-    tennano.osl.tables.leagues: '%core.table_prefix%osl_leagues'
-    tennano.osl.tables.competitions: '%core.table_prefix%osl_competitions'
-    tennano.osl.tables.results: '%core.table_prefix%osl_results'
-    tennano.osl.tables.forum_creators: '%core.table_prefix%osl_forum_creators'
