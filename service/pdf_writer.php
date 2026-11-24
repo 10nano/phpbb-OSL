@@ -235,7 +235,7 @@ class pdf_writer
                     $display = $this->abbreviate($display, max(4, (int) ($width / 5.0)));
                     // Align numeric ranking to the right; other columns stay left-aligned.
                     $text_x = $column['key'] === 'rank' && ctype_digit($display)
-                        ? $x + $width - 3.0 - $this->rank_width($display)
+                        ? $x + $width - 8.0 - $this->rank_width($display)
                         : $x + 3.0;
                     $out .= $this->text($text_x, $y + 7.0, $display, 8);
                     $out .= $this->line($x + $width, $y, $x + $width, $y + $rowH, true);
