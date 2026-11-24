@@ -18,8 +18,9 @@ class m7_reply_instructions_enabled extends \phpbb\db\migration\migration
         return [
             'add_columns' => [
                 $this->table_prefix . 'osl_leagues' => [
-                    // Default on preserves the visibility of existing instructions.
-                    'reply_instructions_enabled' => ['USINT', 1],
+                    // 2 = legacy league: infer visibility from its text.
+                    // New/edited leagues save an explicit 0 or 1.
+                    'reply_instructions_enabled' => ['USINT', 2],
                 ],
             ],
         ];
