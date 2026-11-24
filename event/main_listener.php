@@ -462,6 +462,17 @@ class main_listener implements EventSubscriberInterface
             'S_OSL_HAS_GROUPS' => (bool) $league['groups_enabled'],
             'OSL_SHOOTER_GROUP' => $this->e($group),
         ]);
+
+        // phpBB reads SHOW_PANEL from page_data after this event.
+        // Default to the results tab for a new reply, but preserve any
+        // explicitly selected tab when the form is submitted again.
+        if ($mode === 'reply' && $this->request->variable('show_panel', '') === '')
+        {
+            $page_data = $event['page_data'];
+            $page_data['SHOW_PANEL'] = 'osl-result-panel';
+            $event['page_data'] = $page_data;
+        }
+
         foreach ($league['competitions'] as $comp_id => $competition)
         {
             $saved = $existing[$comp_id] ?? null;
