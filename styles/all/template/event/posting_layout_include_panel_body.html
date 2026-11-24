@@ -17,8 +17,8 @@
             </div>
             <div id="osl-league-settings"<!-- IF not OSL_ENABLED --> style="display:none"<!-- ENDIF -->>
                 <div class="osl-config-row">
-                    <label for="osl_title">{L_OSL_TITLE}</label>
-                    <input class="inputbox osl-form-input osl-form-input-title" type="text" id="osl_title" name="osl_title" value="{OSL_TITLE}" maxlength="255" />
+                    <span class="osl-config-label">{L_OSL_TITLE}</span>
+                    <span id="osl-topic-title-preview" class="osl-topic-title-preview<!-- IF not OSL_HAS_TOPIC_SUBJECT --> osl-topic-title-missing<!-- ENDIF -->" aria-live="polite"><!-- IF OSL_HAS_TOPIC_SUBJECT -->{OSL_TITLE}<!-- ELSE -->{L_OSL_SUBJECT_REQUIRED_HINT}<!-- ENDIF --></span>
                 </div>
                 <div class="osl-config-row">
                     <label for="osl_short_name">{L_OSL_SHORT_NAME}</label>
@@ -126,6 +126,18 @@
 document.addEventListener('DOMContentLoaded', function () {
     var checkbox = document.getElementById('osl_enabled');
     var settings = document.getElementById('osl-league-settings');
+    var topicInput = document.getElementById('subject');
+    var titlePreview = document.getElementById('osl-topic-title-preview');
+    if (topicInput && titlePreview) {
+        function refreshTopicTitle() {
+            var value = topicInput.value.trim();
+            titlePreview.textContent = value || '{L_OSL_SUBJECT_REQUIRED_HINT}';
+            titlePreview.classList.toggle('osl-topic-title-missing', !value);
+        }
+        topicInput.addEventListener('input', refreshTopicTitle);
+        topicInput.addEventListener('change', refreshTopicTitle);
+        refreshTopicTitle();
+    }
     var container = document.getElementById('osl-competitions-container');
     var add = document.getElementById('osl-add-competition');
     var instructionsToggle = document.getElementById('osl_instructions_enabled');
