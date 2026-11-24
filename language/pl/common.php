@@ -38,6 +38,7 @@ $lang = array_merge($lang, [
 	'OSL_ENABLE_LEAGUE'        => 'Utwórz Ligę Strzelecką w tym wątku',
 	'OSL_TITLE'                => 'Pełna nazwa Ligi',
 	'OSL_SUBJECT_REQUIRED_HINT' => 'Wpisz w temacie posta',
+	'OSL_REGULATIONS_REMINDER' => 'Nie zapomnij w treści tego posta (powyżej) wstawić lub podać link do regulaminu ligi',
 	'OSL_SHORT_NAME'           => 'Nazwa skrótowa',
 	'OSL_START_DATE'           => 'Początek ligi (miesiąc i rok)',
 	'OSL_DURATION_MONTHS'      => 'Czas trwania (miesiące)',
