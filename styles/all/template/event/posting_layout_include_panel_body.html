@@ -44,6 +44,15 @@
                     <label for="osl_groups_enabled">{L_OSL_GROUPS_ENABLED}</label>
                     <input type="checkbox" id="osl_groups_enabled" name="osl_groups_enabled" value="1"<!-- IF OSL_GROUPS_ENABLED --> checked="checked"<!-- ENDIF --> />
                 </div>
+                <div class="osl-config-row">
+                    <label for="osl_instructions_enabled">{L_OSL_REPLY_INSTRUCTIONS_ENABLE}</label>
+                    <input type="checkbox" id="osl_instructions_enabled" name="osl_instructions_enabled" value="1"<!-- IF OSL_INSTRUCTIONS_ENABLED --> checked="checked"<!-- ENDIF --> />
+                </div>
+                <div class="osl-instructions-editor" id="osl-instructions-editor"<!-- IF not OSL_INSTRUCTIONS_ENABLED --> style="display:none"<!-- ENDIF -->>
+                    <label for="osl_reply_instructions">{L_OSL_REPLY_INSTRUCTIONS_LABEL}</label>
+                    <textarea class="inputbox osl-form-input osl-instructions-input" id="osl_reply_instructions" name="osl_reply_instructions" rows="8" maxlength="10000"<!-- IF not OSL_INSTRUCTIONS_ENABLED --> disabled="disabled"<!-- ENDIF -->>{OSL_INSTRUCTIONS_TEXT}</textarea>
+                    <p><small>{L_OSL_REPLY_INSTRUCTIONS_HELP}</small></p>
+                </div>
                 <hr />
                 <h3>{L_OSL_COMPETITIONS}</h3>
                 <p>{L_OSL_COMPETITIONS_HELP}</p>
@@ -115,6 +124,17 @@ document.addEventListener('DOMContentLoaded', function () {
     var settings = document.getElementById('osl-league-settings');
     var container = document.getElementById('osl-competitions-container');
     var add = document.getElementById('osl-add-competition');
+    var instructionsToggle = document.getElementById('osl_instructions_enabled');
+    var instructionsEditor = document.getElementById('osl-instructions-editor');
+    var instructionsText = document.getElementById('osl_reply_instructions');
+    if (instructionsToggle && instructionsEditor && instructionsText) {
+        function toggleInstructions() {
+            instructionsEditor.style.display = instructionsToggle.checked ? '' : 'none';
+            instructionsText.disabled = !instructionsToggle.checked;
+        }
+        instructionsToggle.addEventListener('change', toggleInstructions);
+        toggleInstructions();
+    }
     if (!container) { return; }
     var nextComp = 0;
     container.querySelectorAll('.osl-competition').forEach(function (item) {
@@ -279,6 +299,22 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         updatePeriod(false);
     });
+});
+</script>
+<!-- ENDIF -->
+
+<!-- IF S_OSL_REPLY_INSTRUCTIONS -->
+<!-- UI-only source: no name attribute, so it cannot be submitted as post text. -->
+<textarea id="osl-reply-instructions-source" hidden="hidden" aria-hidden="true">{OSL_REPLY_INSTRUCTIONS}</textarea>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var editor = document.getElementById('message');
+    var source = document.getElementById('osl-reply-instructions-source');
+    if (!editor || !source || !source.value.trim()) { return; }
+    // HTML textarea placeholders automatically disappear as soon as users type.
+    // This never modifies editor.value and never becomes part of a saved post.
+    editor.placeholder = source.value;
+    editor.classList.add('osl-reply-instructions-placeholder');
 });
 </script>
 <!-- ENDIF -->
