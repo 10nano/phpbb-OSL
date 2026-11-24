@@ -132,6 +132,12 @@ class pdf_writer
     {
         return ($vertical ? '0.20 G 1.00 w ' : '0.38 G 0.45 w ') . sprintf('%.2F %.2F m %.2F %.2F l S', $x1, $y1, $x2, $y2) . "\n";
     }
+    /** Paint continuous vertical borders on top of the table cell fills. */
+    private function vertical_separator(float $x, float $bottom, float $top, bool $header): string
+    {
+        $style = $header ? '0.88 G 1.40 w ' : '0.12 G 1.40 w ';
+        return $style . sprintf('%.2F %.2F m %.2F %.2F l S', $x, $bottom, $x, $top) . "\n";
+    }
     private function text(float $x, float $y, string $value, int $size = 9, string $color = '0.1'): string
     {
         $value = preg_replace('/[\x00-\x1F]/u', ' ', $value) ?? '';
@@ -210,13 +216,15 @@ class pdf_writer
             $out .= $this->text($margin, $pageH - 75.0, $this->abbreviate($competition['title'], 95), 13);
             $out .= $this->text($pageW - 160.0, $pageH - 47.0, date('Y-m-d'), 9);
 
+            $headerBottom = $y;
+
             foreach ($columns as $index => $column)
             {
                 $width = $widths[$index];
                 $out .= $this->rect($x, $y, $width, $headerH, '0.18 0.18 0.18');
                 $out .= $this->text($x + 3.0, $y + 9.0,
                     $this->abbreviate($column['title'], max(5, (int) ($width / 5.5))), 8, '1');
-                $out .= $this->line($x + $width, $y, $x + $width, $y + $headerH, true);
+                // The full-height separator is drawn after all cell backgrounds.
                 $x += $width;
             }
             $out .= $this->line($margin, $y, $x, $y);
@@ -238,11 +246,24 @@ class pdf_writer
                         ? $x + $width - 18.0 - $this->rank_width($display)
                         : $x + 3.0;
                     $out .= $this->text($text_x, $y + 7.0, $display, 8);
-                    $out .= $this->line($x + $width, $y, $x + $width, $y + $rowH, true);
+                    // The full-height separator is drawn after all cell backgrounds.
                     $x += $width;
                 }
                 $out .= $this->line($margin, $y, $x, $y);
             }
+
+            // Draw the separators last: otherwise the next cell fill can obscure
+            // half of each line. Light lines divide the dark header, dark lines
+            // divide the alternating body rows.
+            $separatorX = $margin;
+            foreach ($widths as $width)
+            {
+                $out .= $this->vertical_separator($separatorX, $y, $headerBottom, false);
+                $out .= $this->vertical_separator($separatorX, $headerBottom, $headerBottom + $headerH, true);
+                $separatorX += $width;
+            }
+            $out .= $this->vertical_separator($separatorX, $y, $headerBottom, false);
+            $out .= $this->vertical_separator($separatorX, $headerBottom, $headerBottom + $headerH, true);
 
             $out .= $this->text($margin, 32.0, 'OSL | ' . $competition['title'], 9);
             $pages[] = ['content' => $out, 'width' => $pageW, 'height' => $pageH];
