@@ -346,13 +346,15 @@ textarea#message.osl-reply-instructions-placeholder::-webkit-input-placeholder {
     font-weight: 700;
     font-size: 13px;
 }
-/* Submit the whole phpBB posting form from the bottom of the league panel. */
-#osl-league-panel .osl-submit-row {
+/* Submit the whole phpBB posting form from either OSL entry panel. */
+#osl-league-panel .osl-submit-row,
+#osl-result-panel .osl-submit-row {
     display: flex;
     justify-content: center;
     margin: 24px 0 8px;
 }
-#osl-league-panel button.osl-submit-button {
+#osl-league-panel button.osl-submit-button,
+#osl-result-panel button.osl-submit-button {
     min-width: 130px;
     padding: 9px 26px;
 }
