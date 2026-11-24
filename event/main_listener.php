@@ -370,7 +370,7 @@ class main_listener implements EventSubscriberInterface
                     ? $this->request->is_set_post('osl_instructions_enabled')
                     : trim((string) ($league['reply_instructions'] ?? '')) !== '',
                 'OSL_INSTRUCTIONS_TEXT' => $this->e($this->request->is_set_post('osl_form_league')
-                    ? $this->request->variable('osl_reply_instructions', '', true)
+                    ? $this->request->untrimmed_variable('osl_reply_instructions', '', true)
                     : ($league['reply_instructions'] ?? '')),
             ]);
             $definitions = [];
@@ -589,7 +589,7 @@ class main_listener implements EventSubscriberInterface
                     $errors[] = $this->language->lang('OSL_ERR_LIMITS');
                 }
                 if ($this->request->is_set_post('osl_instructions_enabled')
-                    && utf8_strlen($this->request->variable('osl_reply_instructions', '', true)) > 10000)
+                    && utf8_strlen($this->request->untrimmed_variable('osl_reply_instructions', '', true)) > 10000)
                 {
                     $errors[] = $this->language->lang('OSL_ERR_REPLY_INSTRUCTIONS_LENGTH');
                 }
@@ -833,7 +833,7 @@ class main_listener implements EventSubscriberInterface
                 'extension_days' => $this->request->variable('osl_extension_days', 0),
                 'groups_enabled' => json_encode($this->request->is_set_post('osl_groups_enabled')),
                 'reply_instructions' => $this->request->is_set_post('osl_instructions_enabled')
-                    ? trim($this->request->variable('osl_reply_instructions', '', true))
+                    ? $this->request->untrimmed_variable('osl_reply_instructions', '', true)
                     : '',
             ];
             $this->db->sql_transaction('begin');
