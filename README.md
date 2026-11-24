@@ -1,6 +1,6 @@
 # OSL – Online Shooting League
 
-**Project version: 0.3.0-dev** (development release, prior to the first public release).
+**Project version: 0.5.0-dev** (development release, prior to the first public release).
 
 A phpBB 3.3.x extension (`tennano/osl`) that manages shooting leagues within forum topics. Each league supports multiple independent disciplines, with separate result submissions and monthly standings.
 
