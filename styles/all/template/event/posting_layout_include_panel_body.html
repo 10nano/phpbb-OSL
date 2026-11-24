@@ -50,7 +50,7 @@
                 </div>
                 <div class="osl-instructions-editor" id="osl-instructions-editor"<!-- IF not OSL_INSTRUCTIONS_ENABLED --> style="display:none"<!-- ENDIF -->>
                     <label for="osl_reply_instructions">{L_OSL_REPLY_INSTRUCTIONS_LABEL}</label>
-                    <textarea class="inputbox osl-form-input osl-instructions-input" id="osl_reply_instructions" name="osl_reply_instructions" rows="8" maxlength="10000"<!-- IF not OSL_INSTRUCTIONS_ENABLED --> disabled="disabled"<!-- ENDIF -->>
+                    <textarea class="inputbox osl-form-input osl-instructions-input" id="osl_reply_instructions" name="osl_reply_instructions" rows="8" maxlength="10000">
 {OSL_INSTRUCTIONS_TEXT}</textarea>
                     <p><small>{L_OSL_REPLY_INSTRUCTIONS_HELP}</small></p>
                 </div>
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (instructionsToggle && instructionsEditor && instructionsText) {
         function toggleInstructions() {
             instructionsEditor.style.display = instructionsToggle.checked ? '' : 'none';
-            instructionsText.disabled = !instructionsToggle.checked;
+            // Keep the hidden textarea enabled so its text is still submitted.
         }
         instructionsToggle.addEventListener('change', toggleInstructions);
         toggleInstructions();
