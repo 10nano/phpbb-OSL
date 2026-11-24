@@ -50,7 +50,8 @@
                 </div>
                 <div class="osl-instructions-editor" id="osl-instructions-editor"<!-- IF not OSL_INSTRUCTIONS_ENABLED --> style="display:none"<!-- ENDIF -->>
                     <label for="osl_reply_instructions">{L_OSL_REPLY_INSTRUCTIONS_LABEL}</label>
-                    <textarea class="inputbox osl-form-input osl-instructions-input" id="osl_reply_instructions" name="osl_reply_instructions" rows="8" maxlength="10000"<!-- IF not OSL_INSTRUCTIONS_ENABLED --> disabled="disabled"<!-- ENDIF -->>{OSL_INSTRUCTIONS_TEXT}</textarea>
+                    <textarea class="inputbox osl-form-input osl-instructions-input" id="osl_reply_instructions" name="osl_reply_instructions" rows="8" maxlength="10000"<!-- IF not OSL_INSTRUCTIONS_ENABLED --> disabled="disabled"<!-- ENDIF -->>
+{OSL_INSTRUCTIONS_TEXT}</textarea>
                     <p><small>{L_OSL_REPLY_INSTRUCTIONS_HELP}</small></p>
                 </div>
                 <hr />
@@ -305,7 +306,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <!-- IF S_OSL_REPLY_INSTRUCTIONS -->
 <!-- UI-only source: no name attribute, so it cannot be submitted as post text. -->
-<textarea id="osl-reply-instructions-source" hidden="hidden" aria-hidden="true">{OSL_REPLY_INSTRUCTIONS}</textarea>
+<!-- An immediate LF after textarea opens is ignored by HTML parsing. The
+     intentional LF below compensates so user-authored leading blank lines survive. -->
+<textarea id="osl-reply-instructions-source" hidden="hidden" aria-hidden="true">
+{OSL_REPLY_INSTRUCTIONS}</textarea>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var editor = document.getElementById('message');
