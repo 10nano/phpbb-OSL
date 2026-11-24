@@ -252,18 +252,30 @@ class pdf_writer
     {
         $pages = [];
         $margin = 40.0;
-        $headerH = 34.0;
         $rowH = 21.0;
 
         foreach ($report['competitions'] as $competition)
         {
             $columns = $competition['columns'];
             $rows = $competition['rows'];
+            // A 10X round consists of two adjacent point/10X subcolumns.
+            $hasXColumns = false;
+            foreach ($columns as $column)
+            {
+                if (preg_match('/^x\d+$/', $column['key']))
+                {
+                    $hasXColumns = true;
+                    break;
+                }
+            }
+            $headerH = $hasXColumns ? 40.0 : 34.0;
             $widths = [];
             $tableW = 0.0;
             foreach ($columns as $column)
             {
-                $width = $this->column_width($column);
+                // Paired 10X columns need less width when the month is shared.
+                $width = $hasXColumns && preg_match('/^[px]\d+$/', $column['key'])
+                    ? 40.0 : $this->column_width($column);
                 $widths[] = $width;
                 $tableW += $width;
             }
@@ -296,19 +308,53 @@ class pdf_writer
             {
                 $width = $widths[$index];
                 $out .= $this->rect($x, $y, $width, $headerH, '0.18 0.18 0.18');
-                // Leave the first column unchanged; indent every other header by 12 pt.
-                $header_padding = $index === 0 ? 3.0 : 15.0;
-                $headingLines = $this->header_lines(
-                    (string) $column['title'], $width - $header_padding - 3.0
-                );
-                if (count($headingLines) > 1)
+                // Share one month heading across PKT and 10X subcolumns.
+                // Draw the month when painting the SECOND cell, after both
+                // backgrounds have been filled.
+                $is_points = $hasXColumns && preg_match('/^p(\d+)$/', $column['key'], $match)
+                    && isset($columns[$index + 1])
+                    && $columns[$index + 1]['key'] === 'x' . $match[1];
+                $is_tenx = $hasXColumns && preg_match('/^x(\d+)$/', $column['key'], $match)
+                    && $index > 0 && $columns[$index - 1]['key'] === 'p' . $match[1];
+                if ($is_points || $is_tenx)
                 {
-                    $out .= $this->text($x + $header_padding, $y + 19.0, $headingLines[0], 8, '1');
-                    $out .= $this->text($x + $header_padding, $y + 8.0, $headingLines[1], 8, '1');
+                    $subheading = $is_points ? 'PKT' : '10X';
+                    $out .= $this->text(
+                        $x + ($width - $this->text_width($subheading, 8)) / 2.0,
+                        $y + 7.0, $subheading, 8, '1'
+                    );
+                    if ($is_tenx)
+                    {
+                        $pair_width = $widths[$index - 1] + $width;
+                        $pair_x = $x - $widths[$index - 1];
+                        $month = preg_replace('/\s+PKT$/u', '', (string) $columns[$index - 1]['title']);
+                        $month = $this->fit_header_text($month, $pair_width - 6.0);
+                        $out .= $this->text(
+                            $pair_x + ($pair_width - $this->text_width($month, 8)) / 2.0,
+                            $y + 27.0, $month, 8, '1'
+                        );
+                        $out .= '0.72 G 0.55 w ' . sprintf(
+                            '%.2F %.2F m %.2F %.2F l S',
+                            $pair_x, $y + 19.0, $pair_x + $pair_width, $y + 19.0
+                        ) . "\n";
+                    }
                 }
-                elseif ($headingLines)
+                else
                 {
-                    $out .= $this->text($x + $header_padding, $y + 13.0, $headingLines[0], 8, '1');
+                    // Other headings keep the previous indentation and wrapping.
+                    $header_padding = $index === 0 ? 3.0 : 15.0;
+                    $headingLines = $this->header_lines(
+                        (string) $column['title'], $width - $header_padding - 3.0
+                    );
+                    if (count($headingLines) > 1)
+                    {
+                        $out .= $this->text($x + $header_padding, $y + 19.0, $headingLines[0], 8, '1');
+                        $out .= $this->text($x + $header_padding, $y + 8.0, $headingLines[1], 8, '1');
+                    }
+                    elseif ($headingLines)
+                    {
+                        $out .= $this->text($x + $header_padding, $y + 13.0, $headingLines[0], 8, '1');
+                    }
                 }
                 // The full-height separator is drawn after all cell backgrounds.
                 $x += $width;
@@ -335,6 +381,11 @@ class pdf_writer
                     $text_x = $is_rank && ctype_digit($display)
                         ? $x + $width - 18.0 - $this->rank_width($display)
                         : $x + $padding;
+                    // Small paired month values are easier to scan when centered.
+                    if ($hasXColumns && preg_match('/^[px]\d+$/', $column['key']))
+                    {
+                        $text_x = $x + ($width - $this->text_width($display, 8)) / 2.0;
+                    }
                     $out .= $this->text($text_x, $y + 7.0, $display, 8);
                     // The full-height separator is drawn after all cell backgrounds.
                     $x += $width;
@@ -346,10 +397,15 @@ class pdf_writer
             // half of each line. Light lines divide the dark header, dark lines
             // divide the alternating body rows.
             $separatorX = $margin;
-            foreach ($widths as $width)
+            foreach ($widths as $index => $width)
             {
                 $out .= $this->vertical_separator($separatorX, $y, $headerBottom, false);
-                $out .= $this->vertical_separator($separatorX, $headerBottom, $headerBottom + $headerH, true);
+                // The middle of a PKT/10X pair does not split its month heading.
+                $is_inner_pair = $hasXColumns && $index > 0
+                    && preg_match('/^p(\d+)$/', $columns[$index - 1]['key'], $match)
+                    && $columns[$index]['key'] === 'x' . $match[1];
+                $header_top = $is_inner_pair ? $headerBottom + 19.0 : $headerBottom + $headerH;
+                $out .= $this->vertical_separator($separatorX, $headerBottom, $header_top, true);
                 $separatorX += $width;
             }
             $out .= $this->vertical_separator($separatorX, $y, $headerBottom, false);
