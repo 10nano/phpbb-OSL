@@ -366,6 +366,12 @@ class main_listener implements EventSubscriberInterface
                 'OSL_GROUPS_ENABLED' => $this->request->is_set_post('osl_form_league')
                     ? $this->request->is_set_post('osl_groups_enabled')
                     : (bool) ($league['groups_enabled'] ?? false),
+                'OSL_INSTRUCTIONS_ENABLED' => $this->request->is_set_post('osl_form_league')
+                    ? $this->request->is_set_post('osl_instructions_enabled')
+                    : trim((string) ($league['reply_instructions'] ?? '')) !== '',
+                'OSL_INSTRUCTIONS_TEXT' => $this->e($this->request->is_set_post('osl_form_league')
+                    ? $this->request->variable('osl_reply_instructions', '', true)
+                    : ($league['reply_instructions'] ?? '')),
             ]);
             $definitions = [];
             if ($this->request->is_set_post('osl_comp_name'))
@@ -415,6 +421,16 @@ class main_listener implements EventSubscriberInterface
         if (!$can_edit_others && !$is_own)
         {
             return;
+        }
+
+        // A placeholder belongs to the editor UI only: it is never put in
+        // phpBB's message field or included in the submitted post contents.
+        if ($mode === 'reply' && trim((string) ($league['reply_instructions'] ?? '')) !== '')
+        {
+            $this->template->assign_vars([
+                'S_OSL_REPLY_INSTRUCTIONS' => true,
+                'OSL_REPLY_INSTRUCTIONS' => $this->e($league['reply_instructions']),
+            ]);
         }
 
         $existing = $mode === 'edit' ? $this->result_by_post($post_id) : [];
@@ -560,6 +576,11 @@ class main_listener implements EventSubscriberInterface
                 if ($duration < 1 || $duration > 24 || $best < 0 || $best > $duration)
                 {
                     $errors[] = $this->language->lang('OSL_ERR_LIMITS');
+                }
+                if ($this->request->is_set_post('osl_instructions_enabled')
+                    && utf8_strlen($this->request->variable('osl_reply_instructions', '', true)) > 10000)
+                {
+                    $errors[] = $this->language->lang('OSL_ERR_REPLY_INSTRUCTIONS_LENGTH');
                 }
                 $definitions = $this->posted_competitions();
                 if (!$definitions)
@@ -800,6 +821,9 @@ class main_listener implements EventSubscriberInterface
                 'best_rounds_count' => $this->request->variable('osl_best_rounds', 8),
                 'extension_days' => $this->request->variable('osl_extension_days', 0),
                 'groups_enabled' => json_encode($this->request->is_set_post('osl_groups_enabled')),
+                'reply_instructions' => $this->request->is_set_post('osl_instructions_enabled')
+                    ? trim($this->request->variable('osl_reply_instructions', '', true))
+                    : '',
             ];
             $this->db->sql_transaction('begin');
             if ($league)
