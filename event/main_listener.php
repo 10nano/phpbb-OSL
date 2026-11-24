@@ -102,6 +102,15 @@ class main_listener implements EventSubscriberInterface
         return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 
+    /** Legacy leagues inherit visibility from text; edited leagues use the saved switch. */
+    protected function reply_instructions_enabled(array $league): bool
+    {
+        $enabled = (int) ($league['reply_instructions_enabled'] ?? 2);
+        return $enabled === 2
+            ? trim((string) ($league['reply_instructions'] ?? '')) !== ''
+            : $enabled === 1;
+    }
+
     protected function get_cached_league(int $topic_id): ?array
     {
         if (!array_key_exists($topic_id, $this->cached_leagues))
@@ -368,7 +377,7 @@ class main_listener implements EventSubscriberInterface
                     : (bool) ($league['groups_enabled'] ?? false),
                 'OSL_INSTRUCTIONS_ENABLED' => $this->request->is_set_post('osl_form_league')
                     ? $this->request->is_set_post('osl_instructions_enabled')
-                    : trim((string) ($league['reply_instructions'] ?? '')) !== '',
+                    : ($league ? $this->reply_instructions_enabled($league) : false),
                 'OSL_INSTRUCTIONS_TEXT' => $this->e($this->request->is_set_post('osl_form_league')
                     ? $this->request->untrimmed_variable('osl_reply_instructions', '', true)
                     : ($league['reply_instructions'] ?? '')),
@@ -425,7 +434,8 @@ class main_listener implements EventSubscriberInterface
 
         // A placeholder belongs to the editor UI only: it is never put in
         // phpBB's message field or included in the submitted post contents.
-        if ($mode === 'reply' && trim((string) ($league['reply_instructions'] ?? '')) !== '')
+        if ($mode === 'reply' && $this->reply_instructions_enabled($league)
+            && trim((string) ($league['reply_instructions'] ?? '')) !== '')
         {
             $this->template->assign_vars([
                 'S_OSL_REPLY_INSTRUCTIONS' => true,
@@ -832,9 +842,11 @@ class main_listener implements EventSubscriberInterface
                 'best_rounds_count' => $this->request->variable('osl_best_rounds', 8),
                 'extension_days' => $this->request->variable('osl_extension_days', 0),
                 'groups_enabled' => json_encode($this->request->is_set_post('osl_groups_enabled')),
-                'reply_instructions' => $this->request->is_set_post('osl_instructions_enabled')
+                // Keep the text whether or not the instruction is enabled.
+                'reply_instructions' => $this->request->is_set_post('osl_reply_instructions')
                     ? $this->request->untrimmed_variable('osl_reply_instructions', '', true)
-                    : '',
+                    : (string) ($league['reply_instructions'] ?? ''),
+                'reply_instructions_enabled' => $this->request->is_set_post('osl_instructions_enabled') ? 1 : 0,
             ];
             $this->db->sql_transaction('begin');
             if ($league)
