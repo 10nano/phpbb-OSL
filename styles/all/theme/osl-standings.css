@@ -244,7 +244,8 @@
 #osl-league-panel .osl-regulations-reminder {
     margin-top: -4px;
 }
-#osl-league-panel .osl-regulations-reminder > span:last-child {
+#osl-league-panel .osl-regulations-reminder > span {
+    grid-column: 1 / -1;
     color: #b00000 !important;
     line-height: 1.4;
 }
