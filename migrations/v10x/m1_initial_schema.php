@@ -2,16 +2,14 @@
 
 namespace tennano\osl\migrations\v10x;
 
+/**
+ * Complete schema for a fresh OSL installation.
+ *
+ * Consolidated development migrations; this is not an upgrade path
+ * for databases from previous OSL versions.
+ */
 class m1_initial_schema extends \phpbb\db\migration\migration
 {
-    public function effectively_installed()
-    {
-        // A complete installation requires all three tables.
-        return $this->db_tools->sql_table_exists($this->table_prefix . 'osl_leagues')
-            && $this->db_tools->sql_table_exists($this->table_prefix . 'osl_competitions')
-            && $this->db_tools->sql_table_exists($this->table_prefix . 'osl_results');
-    }
-
     public static function depends_on()
     {
         return ['\\phpbb\\db\\migration\\data\\v330\\v330'];
@@ -31,7 +29,10 @@ class m1_initial_schema extends \phpbb\db\migration\migration
                         'start_date' => ['TIMESTAMP', 0],
                         'duration_months' => ['USINT', 12],
                         'best_rounds_count' => ['USINT', 12],
+                        'extension_days' => ['USINT', 0],
                         'groups_enabled' => ['TEXT', ''],
+                        'reply_instructions' => ['TEXT', ''],
+                        'reply_instructions_enabled' => ['USINT', 2],
                     ],
                     'PRIMARY_KEY' => 'league_id',
                     'KEYS' => ['topic_id' => ['UNIQUE', 'topic_id']],
@@ -58,7 +59,9 @@ class m1_initial_schema extends \phpbb\db\migration\migration
                         'round_date' => ['TIMESTAMP', 0],
                         'round_index' => ['USINT', 0],
                         'scores_data' => ['TEXT', ''],
+                        'x_scores_data' => ['TEXT', ''],
                         'total_score' => ['DECIMAL:10,2', 0],
+                        'total_x' => ['UINT', 0],
                     ],
                     'PRIMARY_KEY' => 'result_id',
                     'KEYS' => [
@@ -68,16 +71,20 @@ class m1_initial_schema extends \phpbb\db\migration\migration
                         'competition_id' => ['INDEX', 'competition_id'],
                     ],
                 ],
+                $this->table_prefix . 'osl_forum_creators' => [
+                    'COLUMNS' => [
+                        'assignment_id' => ['UINT', null, 'auto_increment'],
+                        'forum_id' => ['UINT', 0],
+                        'user_id' => ['UINT', 0],
+                        'granted_by' => ['UINT', 0],
+                        'granted_at' => ['TIMESTAMP', 0],
+                    ],
+                    'PRIMARY_KEY' => 'assignment_id',
+                    'KEYS' => [
+                        'forum_user' => ['UNIQUE', ['forum_id', 'user_id']],
+                    ],
+                ],
             ],
-        ];
-    }
-
-    public function update_data()
-    {
-        return [
-            ['permission.add', ['u_create_shooting_league', true]],
-            ['permission.permission_set', ['ADMINISTRATORS', 'u_create_shooting_league', 'group']],
-            ['permission.permission_set', ['GLOBAL_MODERATORS', 'u_create_shooting_league', 'group']],
         ];
     }
 
@@ -85,6 +92,7 @@ class m1_initial_schema extends \phpbb\db\migration\migration
     {
         return [
             'drop_tables' => [
+                $this->table_prefix . 'osl_forum_creators',
                 $this->table_prefix . 'osl_results',
                 $this->table_prefix . 'osl_competitions',
                 $this->table_prefix . 'osl_leagues',
