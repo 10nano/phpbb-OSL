@@ -335,14 +335,12 @@ class pdf_writer
             }
             $headerH = $hasXColumns ? 40.0 : 34.0;
             $widths = [];
-            $tableW = 0.0;
             foreach ($columns as $column)
             {
                 // Paired 10X columns need less width when the month is shared.
                 $width = $hasXColumns && preg_match('/^[px]\d+$/', $column['key'])
                     ? 40.0 : $this->column_width($column);
                 $widths[] = $width;
-                $tableW += $width;
             }
 
             $pageW = 1191.0; // Landscape A3, in PDF points.
