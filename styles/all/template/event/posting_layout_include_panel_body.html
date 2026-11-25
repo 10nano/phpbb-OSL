@@ -296,7 +296,15 @@ document.addEventListener('DOMContentLoaded', function () {
                                 </span>
                             </span>
                             <!-- IF osl_result_competitions.fields.TENX_ENABLED -->
-                            <label for="osl_tenx_{osl_result_competitions.ID}_{osl_result_competitions.fields.INDEX}">{L_OSL_TENX} (0–{osl_result_competitions.fields.TENX_MAX}): <input class="inputbox autowidth osl-tenx-result-input" type="number" step="1" min="0" max="{osl_result_competitions.fields.TENX_MAX}" id="osl_tenx_{osl_result_competitions.ID}_{osl_result_competitions.fields.INDEX}" name="osl_tenx[{osl_result_competitions.ID}][{osl_result_competitions.fields.INDEX}]" value="{osl_result_competitions.fields.TENX_VALUE}" /></label>
+                            <label for="osl_tenx_{osl_result_competitions.ID}_{osl_result_competitions.fields.INDEX}">{L_OSL_TENX} (0–{osl_result_competitions.fields.TENX_MAX}):
+                                <span class="osl-score-spinbox osl-tenx-spinbox">
+                                    <input class="inputbox autowidth osl-score-value osl-tenx-result-input" type="text" inputmode="numeric" role="spinbutton" id="osl_tenx_{osl_result_competitions.ID}_{osl_result_competitions.fields.INDEX}" name="osl_tenx[{osl_result_competitions.ID}][{osl_result_competitions.fields.INDEX}]" value="{osl_result_competitions.fields.TENX_VALUE}" data-decimal="0" data-min="0" data-max="{osl_result_competitions.fields.TENX_MAX}" aria-valuemin="0" aria-valuemax="{osl_result_competitions.fields.TENX_MAX}" autocomplete="off" />
+                                    <span class="osl-score-stepper">
+                                        <button type="button" class="osl-score-step-up" aria-label="{L_OSL_SCORE_INCREASE} 10X" title="{L_OSL_SCORE_INCREASE} 10X">&#9650;</button>
+                                        <button type="button" class="osl-score-step-down" aria-label="{L_OSL_SCORE_DECREASE} 10X" title="{L_OSL_SCORE_DECREASE} 10X">&#9660;</button>
+                                    </span>
+                                </span>
+                            </label>
                             <!-- ENDIF -->
                         </dd>
                     </dl>
