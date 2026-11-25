@@ -288,7 +288,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     <dl>
                         <dt><label for="osl_score_{osl_result_competitions.ID}_{osl_result_competitions.fields.INDEX}">{osl_result_competitions.fields.NAME} ({osl_result_competitions.fields.MIN}–{osl_result_competitions.fields.MAX})</label></dt>
                         <dd class="osl-score-inputs">
-                            <input class="inputbox autowidth" type="number" step="<!-- IF osl_result_competitions.fields.DECIMAL_ENABLED -->0.1<!-- ELSE -->1<!-- ENDIF -->" id="osl_score_{osl_result_competitions.ID}_{osl_result_competitions.fields.INDEX}" name="osl_score[{osl_result_competitions.ID}][{osl_result_competitions.fields.INDEX}]" value="{osl_result_competitions.fields.VALUE}" min="{osl_result_competitions.fields.MIN}" max="{osl_result_competitions.fields.MAX}" />
+                            <span class="osl-score-spinbox">
+                                <input class="inputbox autowidth osl-score-value" type="text" inputmode="<!-- IF osl_result_competitions.fields.DECIMAL_ENABLED -->decimal<!-- ELSE -->numeric<!-- ENDIF -->" role="spinbutton" id="osl_score_{osl_result_competitions.ID}_{osl_result_competitions.fields.INDEX}" name="osl_score[{osl_result_competitions.ID}][{osl_result_competitions.fields.INDEX}]" value="{osl_result_competitions.fields.VALUE}" data-decimal="<!-- IF osl_result_competitions.fields.DECIMAL_ENABLED -->1<!-- ELSE -->0<!-- ENDIF -->" data-min="{osl_result_competitions.fields.MIN}" data-max="{osl_result_competitions.fields.MAX}" aria-valuemin="{osl_result_competitions.fields.MIN}" aria-valuemax="{osl_result_competitions.fields.MAX}" autocomplete="off" />
+                                <span class="osl-score-stepper">
+                                    <button type="button" class="osl-score-step-up" aria-label="{L_OSL_SCORE_INCREASE}" title="{L_OSL_SCORE_INCREASE}">&#9650;</button>
+                                    <button type="button" class="osl-score-step-down" aria-label="{L_OSL_SCORE_DECREASE}" title="{L_OSL_SCORE_DECREASE}">&#9660;</button>
+                                </span>
+                            </span>
                             <!-- IF osl_result_competitions.fields.TENX_ENABLED -->
                             <label for="osl_tenx_{osl_result_competitions.ID}_{osl_result_competitions.fields.INDEX}">{L_OSL_TENX} (0–{osl_result_competitions.fields.TENX_MAX}): <input class="inputbox autowidth osl-tenx-result-input" type="number" step="1" min="0" max="{osl_result_competitions.fields.TENX_MAX}" id="osl_tenx_{osl_result_competitions.ID}_{osl_result_competitions.fields.INDEX}" name="osl_tenx[{osl_result_competitions.ID}][{osl_result_competitions.fields.INDEX}]" value="{osl_result_competitions.fields.TENX_VALUE}" /></label>
                             <!-- ENDIF -->
@@ -308,6 +314,94 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // A text input allows exact filtering (including paste and cursor edits).
+    // Native number controls expose neither selectionStart nor selectionEnd,
+    // so their built-in spinner is replaced by these accessible step buttons.
+    document.querySelectorAll('#osl-result-panel .osl-score-spinbox').forEach(function (spinbox) {
+        var input = spinbox.querySelector('.osl-score-value');
+        var decimal = input.dataset.decimal === '1';
+        var minimum = Number(input.dataset.min);
+        var maximum = Number(input.dataset.max);
+        var negativeAllowed = minimum < 0;
+        var allowed = decimal
+            ? (negativeAllowed ? /^-?[0-9]*(?:[.,][0-9]?)?$/ : /^[0-9]*(?:[.,][0-9]?)?$/)
+            : (negativeAllowed ? /^-?[0-9]*$/ : /^[0-9]*$/);
+        var completed = decimal ? /^-?[0-9]+(?:[.,][0-9])?$/ : /^-?[0-9]+$/;
+        var lastGood = input.value;
+        var lastPosition = input.value.length;
+
+        function nextValue(inserted) {
+            return input.value.slice(0, input.selectionStart) + inserted +
+                input.value.slice(input.selectionEnd);
+        }
+        function remember() {
+            if (allowed.test(input.value)) {
+                lastGood = input.value;
+                lastPosition = input.selectionStart;
+            } else {
+                input.value = lastGood;
+                var position = Math.min(lastPosition, input.value.length);
+                input.setSelectionRange(position, position);
+            }
+            if (completed.test(input.value)) {
+                input.setAttribute('aria-valuenow', String(Number(input.value.replace(',', '.'))));
+            } else {
+                input.removeAttribute('aria-valuenow');
+            }
+        }
+        input.addEventListener('beforeinput', function (event) {
+            if (event.isComposing || !event.cancelable || event.data === null) { return; }
+            if (event.inputType.indexOf('insert') !== 0) { return; }
+            if (!allowed.test(nextValue(event.data))) { event.preventDefault(); }
+        });
+        input.addEventListener('keydown', function (event) {
+            if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+                event.preventDefault();
+                changeScore(event.key === 'ArrowUp' ? 1 : -1);
+                return;
+            }
+            if (!event.ctrlKey && !event.metaKey && !event.altKey &&
+                event.key.length === 1 && !allowed.test(nextValue(event.key))) {
+                event.preventDefault();
+            }
+        });
+        input.addEventListener('paste', function (event) {
+            if (!event.clipboardData) { return; }
+            var pasted = event.clipboardData.getData('text');
+            if (!allowed.test(nextValue(pasted))) { event.preventDefault(); }
+        });
+        // Catch replacements, drag/drop, autofill and mobile-keyboard edits.
+        input.addEventListener('input', function (event) {
+            if (!event.isComposing) { remember(); }
+        });
+        input.addEventListener('compositionend', remember);
+
+        function changeScore(direction) {
+            var factor = decimal ? 10 : 1;
+            var minUnits = Math.ceil(minimum * factor - 0.000001);
+            var maxUnits = Math.floor(maximum * factor + 0.000001);
+            var value = input.value.trim();
+            var number = Number(value.replace(',', '.'));
+            var units = value !== '' && completed.test(value) && Number.isFinite(number)
+                ? Math.round(number * factor) + direction
+                : minUnits;
+            units = Math.max(minUnits, Math.min(maxUnits, units));
+            var separator = input.value.indexOf(',') >= 0 ? ',' : '.';
+            input.value = decimal
+                ? (units / 10).toFixed(1).replace('.', separator)
+                : String(units);
+            remember();
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.focus();
+        }
+        spinbox.querySelector('.osl-score-step-up').addEventListener('click', function () {
+            changeScore(1);
+        });
+        spinbox.querySelector('.osl-score-step-down').addEventListener('click', function () {
+            changeScore(-1);
+        });
+        remember();
+    });
     document.querySelectorAll('#osl-result-panel .osl-result-competition').forEach(function (comp) {
         var resultToggle = comp.querySelector('.osl-result-toggle');
         if (!resultToggle) { return; }
