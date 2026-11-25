@@ -4,15 +4,16 @@
 
 A phpBB 3.3.x extension (`tennano/osl`) that manages shooting leagues within forum topics. Each league supports multiple independent disciplines, with separate result submissions and monthly standings.
 
-## Installation and updates (XAMPP)
+## Fresh installation (XAMPP)
 
-1. If OSL is already installed and running, **do not delete its data or database tables**. Back up the extension directory and database before replacing any files.
-2. Close any open forum editing sessions and back up `ext/tennano/osl`.
-3. Copy `tennano/osl/` from the installation archive into `C:\xampp\htdocs\<your-forum-directory>\ext\tennano\osl\`, preserving the directory structure and overwriting the existing files as needed. Alternatively, extract `tennano/` directly into the forum's `ext/` directory.
-4. For a fresh installation, open the phpBB Administration Control Panel (ACP), go to **Customise → Manage extensions**, and enable **Online Shooting League**. If updating an enabled installation, follow the update procedure under *Forum-specific league creation permissions* below when migrations are pending.
-5. Clear phpBB's cache in the ACP (**General → Purge the cache**). If an old compiled template prevents access to the ACP, clear the generated phpBB cache files manually, preserving `index.htm` and `.htaccess`.
+This **main-candidate** build is intended for a clean installation only. Its single, consolidated phpBB migration replaces the previous series of development migrations. **Do not replace the files of an existing OSL installation with this build without a separate, tested data-migration procedure.** Back up the phpBB database before removing any earlier installation.
 
-**Note:** The calendar-month update changes round boundaries. If you have test leagues with results recorded under the old mid-month boundaries, back up your data and recreate those test leagues before checking new standings; the old results retain their original `round_index` values and are not automatically reassigned. No database tables or records are deleted by this update. The optional Group column can be enabled when creating a new league; this setting is locked for existing leagues once results have been recorded.
+1. Make sure the target phpBB installation does not contain old OSL tables or active OSL migration records. Removing extension files alone does not remove its database records.
+2. Copy `tennano/osl/` from the installation archive to `C:\xampp\htdocs\<your-forum-directory>\ext\tennano\osl\`, keeping the directory structure. Alternatively, extract `tennano/` directly under the forum's `ext/` directory.
+3. In phpBB ACP open **Customise → Manage extensions** and enable **Online Shooting League**.
+4. Purge phpBB's cache (ACP → **General → Purge the cache**).
+
+The initial migration creates the complete current OSL schema. Existing development installations with data are **not** automatically upgraded or migrated by this build. Use an isolated test phpBB database for verification.
 
 ## Creating a league
 
@@ -37,21 +38,16 @@ A phpBB 3.3.x extension (`tennano/osl`) that manages shooting leagues within for
 
 ## Database structure
 
-The initial migration (`migrations/v10x/m1_initial_schema.php`) creates three tables with the phpBB table prefix:
+A **single consolidated migration** (`migrations/v10x/m1_initial_schema.php`) creates four tables with the phpBB table prefix:
 
-- `osl_leagues`: league configuration and round parameters;
-- `osl_competitions`: discipline names, display order, and scoring field definitions;
-- `osl_results`: per-discipline result, post, date, scores, and round.
+- `osl_leagues`: league configuration, calendar rounds, extension days, group visibility, and reply instructions (including their enabled state);
+- `osl_competitions`: discipline names, display order, and JSON scoring-field definitions;
+- `osl_results`: result submission, post, participant, shooting date, score values and totals, per-series 10X counts (`x_scores_data`) and total 10X (`total_x`);
+- `osl_forum_creators`: initially empty per-forum league-creation assignments.
 
-The second migration (`migrations/v10x/m2_forum_creators.php`) adds:
+The migration creates all unique and supporting indexes, including uniqueness constraints `(post_id, competition_id)` and `(league_id, competition_id, user_id, round_index)`. It **does not** add the obsolete global `u_create_shooting_league` permission.
 
-- `osl_forum_creators`: forum-specific permissions to create league topics.
-
-The third migration (`migrations/v10x/m3_inner_tens.php`) extends `osl_results` with `x_scores_data` (per-series 10X counts) and `total_x` (per-start sum), leaving existing scores intact and defaulting old 10X counts to zero.
-
-Unique indexes on `osl_results` enforce `(post_id, competition_id)` and `(league_id, competition_id, user_id, round_index)`.
-
-The optional group feature uses the existing `osl_leagues.groups_enabled` column (a JSON-encoded Boolean for new leagues) and `osl_results.shooter_group`. Older leagues with a non-empty list of predefined groups are interpreted as having the Group column enabled. Rankings are never split by group.
+The optional Group feature uses `osl_leagues.groups_enabled` (JSON-encoded Boolean) and `osl_results.shooter_group`; standings are never separated by group. This consolidated migration is for **fresh installs**, not upgrades from previously deployed OSL migrations.
 
 ## Forum-specific league creation permissions
 
@@ -63,9 +59,9 @@ The optional group feature uses the existing `osl_leagues.groups_enabled` column
 4. That user may then create OSL league topics **only in that forum**, provided they also hold the standard phpBB permission `f_post` to create topics.
 5. You may revoke the assignment from the same page at any time.
 
-The `m2_forum_creators` migration creates an initially empty assignments table and removes the obsolete global `u_create_shooting_league` permission, which previously granted league creation rights to administrators and global moderators. The current code contains no administrative or moderator bypass for forum-specific assignments. Existing leagues and results are not changed.
+The initial migration creates an empty forum-specific permissions table. No global league-creation permission or administrative/moderator bypass is installed.
 
-**Updating from an earlier OSL version:** Back up the database and extension directory. Disable OSL in the ACP **without deleting its data**, replace the files, then re-enable the extension so phpBB runs any pending migration. Finally, purge phpBB's cache. Do not edit the previously applied `m1_initial_schema.php` migration or delete league data.
+**Upgrading older OSL installations is not supported by this candidate.** If you have results to retain, do not overwrite or delete them: prepare and test a dedicated migration first.
 
 ## Group / Club verification checklist
 
@@ -89,7 +85,7 @@ The `m2_forum_creators` migration creates an initially empty assignments table a
 
 ## Testing notes
 
-The PHP files have passed syntax checks; full integration testing of this updated build on phpBB/XAMPP remains necessary. For a new forum installation, perform the integration checks above, including a fresh-install test of all three migrations.
+Before release, run PHP syntax checks and the complete integration checklist on phpBB/XAMPP, including a fresh installation and data deletion/uninstallation test of the single migration.
 
 ## License
 
@@ -106,8 +102,7 @@ and reappears during the next round's extension period. The submitted shooting
 date must belong to the selected round. One result per shooter, discipline
 and round is enforced regardless of when it is submitted. Existing results
 can be edited without opening new late submissions. The setting is locked
-after results have been recorded. Migration `m4_extension_days` preserves
-existing data and defaults old leagues to 0 extra days.
+after results have been recorded. The initial schema defines `extension_days` with a default of 0.
 
 
 ### Exporting complete league standings
@@ -121,14 +116,3 @@ the league title. Each download contains all competitions:
 
 Exports use the same ranking service as the on-screen tables and require read
 permission to the parent forum. No database migration is needed.
-
-
-## Optional test clock (test-clock branch only)
-
-The OSL test clock is disabled by default. In ACP, go to **Extensions → OSL → OSL test clock** to enable or disable time simulation and to select a test date and time (Europe/Warsaw). The settings are stored in this forum's phpBB configuration, not in a tracked configuration file.
-
-The simulated time applies only to the submission-window logic in OSL (form display, result submission validation, and the initial default league-year field), and only if the HTTP request originates from `127.0.0.1` or `::1`. All other requests use the actual server time, even when the ACP switch is enabled. The simulator does not alter phpBB post timestamps, the Windows clock, or any other extension. It does not affect export timestamps.
-
-**Install/upgrade:** A new, data-preserving migration registers the ACP module and disabled-by-default settings. Use ACP → Customise → Manage extensions to disable OSL (do **not** delete its data), copy the updated extension files, enable OSL again, and purge phpBB's cache. Installation requires an administrator with the `a_board` permission. Keep this feature in the `test-clock` Git branch, not `main`.
-
-**Warning:** Submissions made during testing still create real records in the local database. Use a separate test forum and database. The clock is intentionally limited to direct localhost requests, and should stay disabled on any publicly accessible installation.
