@@ -455,6 +455,52 @@ textarea#message.osl-reply-instructions-placeholder::-webkit-input-placeholder {
 #osl-league-panel .osl-decimal-config,
 #osl-league-panel .osl-tenx-config { white-space: nowrap; }
 #osl-result-panel .osl-score-inputs { flex-wrap: wrap; gap: 14px; }
+/* Controlled numeric entry keeps the familiar up/down controls while
+   preventing extra decimal digits and pasted nonnumeric characters. */
+#osl-result-panel .osl-score-spinbox {
+    display: inline-flex;
+    align-items: stretch;
+    height: 29px;
+    box-sizing: border-box;
+}
+#osl-result-panel .osl-score-spinbox input.osl-score-value {
+    width: 95px;
+    min-width: 0;
+    height: 29px;
+    box-sizing: border-box;
+    border-radius: 0 !important;
+    margin: 0 !important;
+}
+#osl-result-panel .osl-score-stepper {
+    display: flex;
+    flex-direction: column;
+    width: 20px;
+    height: 29px;
+    flex: 0 0 20px;
+}
+#osl-result-panel .osl-score-stepper button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 14.5px;
+    min-height: 0;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 1px solid #777 !important;
+    border-left: 0 !important;
+    border-radius: 0 !important;
+    background: #e8e8e8 !important;
+    color: #222 !important;
+    font: 9px/1 Arial, sans-serif !important;
+    cursor: pointer;
+}
+#osl-result-panel .osl-score-stepper button + button {
+    border-top: 0 !important;
+}
+#osl-result-panel .osl-score-stepper button:hover {
+    background: #d0d0d0 !important;
+}
 #osl-result-panel .osl-tenx-result-input { width: 75px; }
 .osl-standings table.osl-results-table .osl-col-tenx { min-width: 55px; }
 
