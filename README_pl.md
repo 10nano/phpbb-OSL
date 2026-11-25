@@ -4,15 +4,16 @@
 
 Rozszerzenie do phpBB 3.3.x (`tennano/osl`), służące do prowadzenia lig strzeleckich w tematach forum. Każda liga może obejmować wiele niezależnych konkurencji, z osobnym zgłaszaniem wyników i miesięcznymi tabelami klasyfikacji.
 
-## Instalacja i aktualizacje (XAMPP)
+## Świeża instalacja (XAMPP)
 
-1. Jeśli OSL jest już zainstalowane i działa, **nie usuwaj jego danych ani tabel bazy danych**. Przed zastąpieniem plików wykonaj kopię zapasową katalogu rozszerzenia i bazy danych.
-2. Zamknij wszystkie otwarte sesje edycji na forum i wykonaj kopię zapasową katalogu `ext/tennano/osl`.
-3. Skopiuj katalog `tennano/osl/` z archiwum instalacyjnego do `C:\xampp\htdocs\<katalog-twojego-forum>\ext\tennano\osl\`, zachowując strukturę katalogów i w razie potrzeby nadpisując istniejące pliki. Alternatywnie rozpakuj katalog `tennano/` bezpośrednio do katalogu `ext/` forum.
-4. Przy nowej instalacji otwórz Panel administracyjny phpBB (ACP), przejdź do **Dostosuj → Zarządzanie rozszerzeniami** i włącz **Online Shooting League**. Jeśli aktualizujesz już włączone rozszerzenie, a wymagane są migracje, postępuj zgodnie z procedurą aktualizacji opisaną niżej w sekcji *Uprawnienia do tworzenia lig w poszczególnych forach*.
-5. Wyczyść pamięć podręczną phpBB w ACP (**Ogólne → Wyczyść pamięć podręczną**). Jeżeli stary, skompilowany szablon uniemożliwia dostęp do ACP, ręcznie usuń wygenerowane pliki pamięci podręcznej phpBB, zachowując `index.htm` i `.htaccess`.
+Wersja **main-candidate** jest przeznaczona wyłącznie do nowej instalacji. Jedna scalona migracja phpBB zastępuje dotychczasowy ciąg migracji rozwojowych. **Nie zastępuj plików istniejącej instalacji OSL tą wersją bez odrębnej, przetestowanej procedury przenoszenia danych.** Przed usuwaniem poprzedniej instalacji wykonaj kopię bazy danych phpBB.
 
-**Uwaga:** Aktualizacja do rund opartych na miesiącach kalendarzowych zmienia granice rund. Jeżeli masz ligi testowe z wynikami zapisanymi według poprzednich granic przypadających w środku miesiąca, wykonaj kopię zapasową danych i utwórz te ligi testowe ponownie, zanim sprawdzisz nowe tabele wyników. Stare wyniki zachowują swoje pierwotne wartości `round_index` i nie są automatycznie przypisywane do innych rund. Ta aktualizacja nie usuwa żadnych tabel ani rekordów bazy danych. Opcjonalną kolumnę Grupa można włączyć podczas tworzenia nowej ligi; po zapisaniu wyników w istniejącej lidze tego ustawienia nie można już zmienić.
+1. Sprawdź, czy docelowa instalacja phpBB nie zawiera starych tabel OSL ani aktywnych wpisów jego migracji. Samo usunięcie plików rozszerzenia nie usuwa danych z bazy.
+2. Skopiuj katalog `tennano/osl/` z archiwum do `C:\xampp\htdocs\<katalog-twojego-forum>\ext\tennano\osl\`, zachowując strukturę katalogów. Możesz też rozpakować `tennano/` bezpośrednio w katalogu `ext/` forum.
+3. W panelu administracyjnym phpBB wybierz **Dostosuj → Zarządzanie rozszerzeniami** i włącz **Online Shooting League**.
+4. Wyczyść pamięć podręczną phpBB (ACP → **Ogólne → Wyczyść pamięć podręczną**).
+
+Migracja inicjalizacyjna tworzy od razu pełny aktualny schemat OSL. **Ta wersja nie aktualizuje automatycznie** starszych instalacji rozwojowych z zapisanymi danymi. Do weryfikacji używaj osobnej testowej bazy phpBB.
 
 ## Tworzenie ligi
 
@@ -37,21 +38,16 @@ Rozszerzenie do phpBB 3.3.x (`tennano/osl`), służące do prowadzenia lig strze
 
 ## Struktura bazy danych
 
-Pierwsza migracja (`migrations/v10x/m1_initial_schema.php`) tworzy trzy tabele z prefiksem tabel phpBB:
+**Jedna scalona migracja** (`migrations/v10x/m1_initial_schema.php`) tworzy cztery tabele z prefiksem phpBB:
 
-- `osl_leagues`: konfiguracja ligi i parametry rund;
-- `osl_competitions`: nazwy konkurencji, kolejność wyświetlania oraz definicje pól punktacji;
-- `osl_results`: wynik danej konkurencji, post, data, punktacja i runda.
+- `osl_leagues`: konfiguracja ligi, miesiące kalendarzowe, dodatkowe dni, widoczność grupy oraz instrukcje zgłaszania wyników wraz z ich stanem włączenia;
+- `osl_competitions`: nazwy konkurencji, kolejność wyświetlania i definicje serii punktowych w JSON;
+- `osl_results`: zgłoszenie wyniku, post, uczestnik, data strzelania, punkty i sumy, liczby 10X dla serii (`x_scores_data`) i suma 10X (`total_x`);
+- `osl_forum_creators`: początkowo pusta tabela uprawnień do zakładania lig w poszczególnych forach.
 
-Druga migracja (`migrations/v10x/m2_forum_creators.php`) dodaje:
+Migracja tworzy wszystkie niezbędne indeksy, w tym unikalność `(post_id, competition_id)` oraz `(league_id, competition_id, user_id, round_index)`. **Nie** dodaje przestarzałego globalnego uprawnienia `u_create_shooting_league`.
 
-- `osl_forum_creators`: uprawnienia do tworzenia tematów lig w poszczególnych forach.
-
-Trzecia migracja (`migrations/v10x/m3_inner_tens.php`) rozszerza tabelę `osl_results` o `x_scores_data` (liczby 10X dla poszczególnych serii) i `total_x` (sumę 10X w danym starcie), zachowując dotychczasowe wyniki i ustawiając dla starych wpisów domyślną liczbę 10X równą zeru.
-
-Unikalne indeksy tabeli `osl_results` wymuszają unikalność zestawów (`post_id`, `competition_id`) oraz (`league_id`, `competition_id`, `user_id`, `round_index`).
-
-Opcjonalna funkcja grup korzysta z istniejących kolumn `osl_leagues.groups_enabled` (dla nowych lig wartość logiczna zakodowana jako JSON) i `osl_results.shooter_group`. Starsze ligi z niepustą listą wcześniej zdefiniowanych grup są interpretowane jako ligi z włączoną kolumną Grupa. Klasyfikacja nigdy nie jest dzielona według grup.
+Opcjonalna grupa korzysta z `osl_leagues.groups_enabled` (wartość logiczna w JSON) i `osl_results.shooter_group`; klasyfikacja nie jest dzielona według grupy. Ta migracja służy **nowej instalacji**, a nie aktualizacji wcześniej stosowanych migracji OSL.
 
 ## Uprawnienia do tworzenia lig w poszczególnych forach
 
@@ -63,9 +59,9 @@ Opcjonalna funkcja grup korzysta z istniejących kolumn `osl_leagues.groups_enab
 4. Taki użytkownik może następnie tworzyć tematy lig OSL **wyłącznie w tym forum**, pod warunkiem że ma również standardowe uprawnienie phpBB `f_post` do zakładania tematów.
 5. W każdej chwili możesz odebrać uprawnienie na tej samej stronie.
 
-Migracja `m2_forum_creators` tworzy początkowo pustą tabelę przypisań i usuwa przestarzałe globalne uprawnienie `u_create_shooting_league`, które wcześniej pozwalało administratorom i moderatorom globalnym tworzyć ligi. W aktualnym kodzie administratorzy i moderatorzy nie mogą omijać wymogu indywidualnego przypisania uprawnienia dla forum. Istniejące ligi i wyniki nie są zmieniane.
+Migracja inicjalizacyjna tworzy pustą tabelę uprawnień dla poszczególnych forów. Nie instaluje globalnego uprawnienia do tworzenia lig ani wyjątków dla administratorów i moderatorów.
 
-**Aktualizacja ze starszej wersji OSL:** Wykonaj kopię zapasową bazy danych i katalogu rozszerzenia. Wyłącz OSL w ACP **bez usuwania jego danych**, zastąp pliki, a następnie ponownie włącz rozszerzenie, aby phpBB wykonał ewentualne oczekujące migracje. Na koniec wyczyść pamięć podręczną phpBB. Nie edytuj wcześniej wykonanej migracji `m1_initial_schema.php` ani nie usuwaj danych lig.
+**Aktualizacja starszych instalacji OSL nie jest obsługiwana przez tę wersję kandydacką.** Jeżeli masz wyniki do zachowania, nie nadpisuj ani nie usuwaj danych — najpierw przygotuj i przetestuj osobną migrację.
 
 ## Lista kontrolna funkcji Grupa / Klub
 
@@ -89,7 +85,7 @@ Migracja `m2_forum_creators` tworzy początkowo pustą tabelę przypisań i usuw
 
 ## Uwagi dotyczące testów
 
-Pliki PHP przeszły kontrolę składni; nadal konieczne są pełne testy integracyjne zaktualizowanej wersji w środowisku phpBB/XAMPP. W przypadku instalacji na nowym forum przeprowadź powyższe testy integracyjne, w tym test świeżej instalacji wszystkich trzech migracji.
+Przed wydaniem należy sprawdzić składnię plików PHP i przeprowadzić testy integracyjne na phpBB/XAMPP, w tym świeżą instalację oraz usuwanie danych/odinstalowanie pojedynczej migracji.
 
 ## Licencja
 
@@ -99,7 +95,7 @@ GPL-2.0-only. Pełny tekst licencji znajduje się w pliku `license.txt`.
 ### Rozszerzone okno zgłaszania wyników
 
 Organizatorzy ligi mogą podczas jej tworzenia ustawić **Dodatkowe dni** (0–7, domyślnie 0).
-Przez wskazaną liczbę dni kalendarzowych po zakończeniu rundy strzelec może osobno dla każdej konkurencji wybrać opcję **Wyniki za poprzedni miesiąc**. To pole wyboru jest widoczne tylko podczas aktywnego okresu dodatkowych dni; po jego upływie znika i pojawia się ponownie podczas okresu dodatkowych dni kolejnej rundy. Zgłoszona data strzelania musi należeć do wybranej rundy. Niezależnie od momentu zgłoszenia nadal obowiązuje limit jednego wyniku na strzelca, konkurencję i rundę. Istniejące wyniki można edytować bez otwierania możliwości nowych, spóźnionych zgłoszeń. Po zapisaniu wyników ustawienie zostaje zablokowane. Migracja `m4_extension_days` zachowuje istniejące dane i ustawia dla starych lig domyślnie 0 dodatkowych dni.
+Przez wskazaną liczbę dni kalendarzowych po zakończeniu rundy strzelec może osobno dla każdej konkurencji wybrać opcję **Wyniki za poprzedni miesiąc**. To pole wyboru jest widoczne tylko podczas aktywnego okresu dodatkowych dni; po jego upływie znika i pojawia się ponownie podczas okresu dodatkowych dni kolejnej rundy. Zgłoszona data strzelania musi należeć do wybranej rundy. Niezależnie od momentu zgłoszenia nadal obowiązuje limit jednego wyniku na strzelca, konkurencję i rundę. Istniejące wyniki można edytować bez otwierania możliwości nowych, spóźnionych zgłoszeń. Po zapisaniu wyników ustawienie zostaje zablokowane. Schemat inicjalizacyjny definiuje `extension_days` z wartością domyślną 0.
 
 
 ### Eksport pełnych tabel wyników ligi
@@ -110,14 +106,3 @@ W pierwszym poście ligi obok jej tytułu znajdują się odnośniki do pobrania 
 - CSV: UTF-8 z BOM, sekcje poszczególnych konkurencji oddzielone średnikami.
 
 Eksport korzysta z tego samego mechanizmu klasyfikacji co tabele wyświetlane na forum i wymaga uprawnienia do odczytu forum, w którym znajduje się liga. Migracja bazy danych nie jest potrzebna.
-
-
-## Opcjonalny zegar testowy (tylko gałąź test-clock)
-
-Zegar testowy OSL jest domyślnie wyłączony. W ACP przejdź do **Rozszerzenia → OSL → Zegar testowy OSL**, aby włączyć lub wyłączyć symulację czasu i wybrać datę oraz godzinę testową (Europe/Warsaw). Ustawienia są zapisywane w konfiguracji phpBB tego forum, a nie w pliku konfiguracyjnym śledzonym przez Git.
-
-Symulowany czas wpływa wyłącznie na logikę okresów zgłaszania wyników w OSL (wyświetlanie formularza, sprawdzanie poprawności zgłoszeń oraz początkową domyślną wartość roku ligi) i tylko wtedy, gdy żądanie HTTP pochodzi z adresu `127.0.0.1` lub `::1`. Wszystkie inne żądania używają rzeczywistego czasu serwera, nawet jeżeli przełącznik w ACP jest włączony. Symulator nie zmienia znaczników czasu postów phpBB, zegara systemu Windows ani działania innych rozszerzeń. Nie wpływa też na znaczniki czasu eksportów.
-
-**Instalacja/aktualizacja:** Nowa migracja zachowująca dane rejestruje moduł ACP i ustawienia domyślnie wyłączonego zegara. W ACP wybierz **Dostosuj → Zarządzanie rozszerzeniami** i wyłącz OSL (**nie usuwaj** jego danych), skopiuj zaktualizowane pliki rozszerzenia, ponownie włącz OSL i wyczyść pamięć podręczną phpBB. Instalacja wymaga administratora z uprawnieniem `a_board`. Zachowaj tę funkcję w gałęzi Git `test-clock`, a nie w `main`.
-
-**Ostrzeżenie:** Zgłoszenia wysyłane podczas testów nadal tworzą rzeczywiste rekordy w lokalnej bazie danych. Korzystaj z osobnego forum testowego i osobnej bazy danych. Zegar jest celowo ograniczony do bezpośrednich żądań z localhost i powinien pozostawać wyłączony na każdej instalacji publicznie dostępnej.
