@@ -820,8 +820,8 @@ class main_listener implements EventSubscriberInterface
                         || !$this->valid_score_precision((float) $normalized, $decimal_enabled))
                     {
                         $errors[] = $this->e($comp['title']) . ': ' . $this->language->lang(
-                            'OSL_ERR_SCORE_PRECISION', $this->e($field['name']),
-                            $decimal_enabled ? '0,1' : '1'
+                            $decimal_enabled ? 'OSL_ERR_SCORE_PRECISION_DECIMAL' : 'OSL_ERR_SCORE_PRECISION_INTEGER',
+                            $this->e($field['name'])
                         );
                     }
                     elseif ((float) $normalized < (float) $field['min'] - 0.000001
