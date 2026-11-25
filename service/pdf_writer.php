@@ -245,8 +245,73 @@ class pdf_writer
     }
 
     /**
-     * Keep every column and every competitor on the same PDF page.
-     * A competition gets its own page, sized to the complete table.
+     * Fit month columns into landscape A3 pages without shrinking the table.
+     * Repeat the fixed ranking columns on every horizontal slice and keep
+     * each PKT/10X pair together.
+     */
+    private function column_slices(array $columns, array $widths, float $availableWidth): array
+    {
+        $fixedColumns = [];
+        $fixedWidths = [];
+        $monthGroups = [];
+
+        for ($i = 0, $count = count($columns); $i < $count; $i++)
+        {
+            $column = $columns[$i];
+            if (!preg_match('/^[px]\d+$/', $column['key']))
+            {
+                $fixedColumns[] = $column;
+                $fixedWidths[] = $widths[$i];
+                continue;
+            }
+
+            $groupColumns = [$column];
+            $groupWidths = [$widths[$i]];
+            if (preg_match('/^p(\d+)$/', $column['key'], $match)
+                && isset($columns[$i + 1])
+                && $columns[$i + 1]['key'] === 'x' . $match[1])
+            {
+                $groupColumns[] = $columns[++$i];
+                $groupWidths[] = $widths[$i];
+            }
+            $monthGroups[] = ['columns' => $groupColumns, 'widths' => $groupWidths];
+        }
+
+        $fixedWidth = array_sum($fixedWidths);
+        if ($fixedWidth > $availableWidth)
+        {
+            throw new \RuntimeException('OSL PDF fixed columns exceed the A3 page width.');
+        }
+
+        $slices = [];
+        $sliceColumns = $fixedColumns;
+        $sliceWidths = $fixedWidths;
+        $sliceWidth = $fixedWidth;
+        foreach ($monthGroups as $group)
+        {
+            $groupWidth = array_sum($group['widths']);
+            if ($fixedWidth + $groupWidth > $availableWidth)
+            {
+                throw new \RuntimeException('OSL PDF month columns exceed the A3 page width.');
+            }
+            if (count($sliceColumns) > count($fixedColumns) && $sliceWidth + $groupWidth > $availableWidth)
+            {
+                $slices[] = ['columns' => $sliceColumns, 'widths' => $sliceWidths];
+                $sliceColumns = $fixedColumns;
+                $sliceWidths = $fixedWidths;
+                $sliceWidth = $fixedWidth;
+            }
+            $sliceColumns = array_merge($sliceColumns, $group['columns']);
+            $sliceWidths = array_merge($sliceWidths, $group['widths']);
+            $sliceWidth += $groupWidth;
+        }
+        $slices[] = ['columns' => $sliceColumns, 'widths' => $sliceWidths];
+        return $slices;
+    }
+
+    /**
+     * Keep every PDF page landscape A3. Continue long standings on subsequent
+     * pages with a fresh title and column header, without reducing text size.
      */
     private function table_pages(array $report): array
     {
@@ -280,140 +345,161 @@ class pdf_writer
                 $tableW += $width;
             }
 
-            // The minimum is the original A3 landscape canvas. Wider/taller
-            // standings use a larger page instead of cutting months or rows.
-            $pageW = max(1191.0, $tableW + 2 * $margin);
-            // Enlarge compact tables uniformly to use the printable A3 width.
-            // Limit enlargement for short leagues with only a few columns.
-            $tableScale = min(1.25, ($pageW - 2 * $margin) / max(1.0, $tableW));
-            $pageH = max(842.0, 185.0 + $tableScale * ($headerH + $rowH * count($rows)));
-            $y = $pageH - 138.0;
-            $x = $margin;
-
-            $out = '';
-            $out .= $this->text($margin, $pageH - 52.0, $this->abbreviate($report['title'], 92), 17);
-            $out .= $this->text($margin, $pageH - 75.0, $this->abbreviate($competition['title'], 95), 13);
-            $out .= $this->text($pageW - 160.0, $pageH - 47.0, date('Y-m-d'), 9);
-
-            $headerBottom = $y;
-
-            // Scale the table around its upper-left corner; titles, date and
-            // footer remain their original size and position on the page.
+            $pageW = 1191.0; // Landscape A3, in PDF points.
+            $pageH = 842.0;
+            $slices = $this->column_slices($columns, $widths, $pageW - 2.0 * $margin);
+            $widestSlice = 0.0;
+            foreach ($slices as $slice)
+            {
+                $widestSlice = max($widestSlice, array_sum($slice['widths']));
+            }
+            // Preserve the existing enlargement for compact tables. Never
+            // scale down, and keep the same scale across all pages.
+            $tableScale = min(1.25, ($pageW - 2.0 * $margin) / max(1.0, $widestSlice));
+            $headerBottom = $pageH - 138.0;
             $tableTop = $headerBottom + $headerH;
-            $out .= sprintf("q %.6F 0 0 %.6F %.2F %.2F cm\n",
-                $tableScale, $tableScale,
-                (1.0 - $tableScale) * $margin, (1.0 - $tableScale) * $tableTop);
+            $bottomLimit = 55.0; // Leave room for the page footer.
+            $rowsPerPage = max(1, (int) floor(
+                (($tableTop - $bottomLimit) / $tableScale - $headerH) / $rowH
+            ));
+            $rowPages = array_chunk($rows, $rowsPerPage);
+            if (!$rowPages) { $rowPages = [[]]; }
+            $totalPages = count($slices) * count($rowPages);
+            $pageNumber = 0;
 
-            foreach ($columns as $index => $column)
+            foreach ($slices as $slice)
             {
-                $width = $widths[$index];
-                $out .= $this->rect($x, $y, $width, $headerH, '0.18 0.18 0.18');
-                // Share one month heading across PKT and 10X subcolumns.
-                // Draw the month when painting the SECOND cell, after both
-                // backgrounds have been filled.
-                $is_points = $hasXColumns && preg_match('/^p(\d+)$/', $column['key'], $match)
-                    && isset($columns[$index + 1])
-                    && $columns[$index + 1]['key'] === 'x' . $match[1];
-                $is_tenx = $hasXColumns && preg_match('/^x(\d+)$/', $column['key'], $match)
-                    && $index > 0 && $columns[$index - 1]['key'] === 'p' . $match[1];
-                if ($is_points || $is_tenx)
+                $columns = $slice['columns'];
+                $widths = $slice['widths'];
+                foreach ($rowPages as $rowPageIndex => $pageRows)
                 {
-                    $subheading = $is_points ? 'PKT' : '10X';
-                    $out .= $this->text(
-                        $x + ($width - $this->text_width($subheading, 8)) / 2.0,
-                        $y + 7.0, $subheading, 8, '1'
-                    );
-                    if ($is_tenx)
-                    {
-                        $pair_width = $widths[$index - 1] + $width;
-                        $pair_x = $x - $widths[$index - 1];
-                        $month = preg_replace('/\s+PKT$/u', '', (string) $columns[$index - 1]['title']);
-                        $month = $this->fit_header_text($month, $pair_width - 6.0);
-                        $out .= $this->text(
-                            $pair_x + ($pair_width - $this->text_width($month, 8)) / 2.0,
-                            $y + 27.0, $month, 8, '1'
-                        );
-                        $out .= '0.72 G 0.55 w ' . sprintf(
-                            '%.2F %.2F m %.2F %.2F l S',
-                            $pair_x, $y + 19.0, $pair_x + $pair_width, $y + 19.0
-                        ) . "\n";
-                    }
-                }
-                else
-                {
-                    // Other headings keep the previous indentation and wrapping.
-                    $header_padding = $index === 0 ? 3.0 : 15.0;
-                    $headingLines = $this->header_lines(
-                        (string) $column['title'], $width - $header_padding - 3.0
-                    );
-                    if (count($headingLines) > 1)
-                    {
-                        $out .= $this->text($x + $header_padding, $y + 19.0, $headingLines[0], 8, '1');
-                        $out .= $this->text($x + $header_padding, $y + 8.0, $headingLines[1], 8, '1');
-                    }
-                    elseif ($headingLines)
-                    {
-                        $out .= $this->text($x + $header_padding, $y + 13.0, $headingLines[0], 8, '1');
-                    }
-                }
-                // The full-height separator is drawn after all cell backgrounds.
-                $x += $width;
-            }
-            $out .= $this->line($margin, $y, $x, $y);
+                    $pageNumber++;
+                    $y = $headerBottom;
+                    $x = $margin;
+                    $out = '';
+                    $out .= $this->text($margin, $pageH - 52.0, $this->abbreviate($report['title'], 92), 17);
+                    $out .= $this->text($margin, $pageH - 75.0, $this->abbreviate($competition['title'], 95), 13);
+                    $out .= $this->text($pageW - 160.0, $pageH - 47.0, date('Y-m-d'), 9);
 
-            foreach ($rows as $index => $record)
-            {
-                $y -= $rowH;
-                $x = $margin;
-                foreach ($columns as $j => $column)
-                {
-                    $width = $widths[$j];
-                    $out .= $this->rect($x, $y, $width, $rowH,
-                        $index % 2 ? '0.95 0.95 0.95' : '0.84 0.84 0.84');
-                    $value = $record[$column['key']] ?? null;
-                    $display = $value === null ? '-' : (string) $value;
-                    // Indent non-ranking columns 12 pt further without moving rank numbers.
-                    $is_rank = $column['key'] === 'rank';
-                    $padding = $is_rank ? 3.0 : 15.0;
-                    $display = $this->abbreviate($display,
-                        max(2, (int) (($width - $padding - 3.0) / 5.0)));
-                    // Keep numeric rankings right-aligned at their existing position.
-                    $text_x = $is_rank && ctype_digit($display)
-                        ? $x + $width - 18.0 - $this->rank_width($display)
-                        : $x + $padding;
-                    // Small paired month values are easier to scan when centered.
-                    if ($hasXColumns && preg_match('/^[px]\d+$/', $column['key']))
+                    // Only enlarge compact tables, anchored at the top left.
+                    // Titles and footer keep their original positions.
+                    $out .= sprintf("q %.6F 0 0 %.6F %.2F %.2F cm\n",
+                        $tableScale, $tableScale,
+                        (1.0 - $tableScale) * $margin, (1.0 - $tableScale) * $tableTop);
+
+                    foreach ($columns as $index => $column)
                     {
-                        $text_x = $x + ($width - $this->text_width($display, 8)) / 2.0;
+                        $width = $widths[$index];
+                        $out .= $this->rect($x, $y, $width, $headerH, '0.18 0.18 0.18');
+                        // Share one month heading across PKT and 10X subcolumns.
+                        // Draw the month when painting the SECOND cell, after both
+                        // backgrounds have been filled.
+                        $is_points = $hasXColumns && preg_match('/^p(\d+)$/', $column['key'], $match)
+                            && isset($columns[$index + 1])
+                            && $columns[$index + 1]['key'] === 'x' . $match[1];
+                        $is_tenx = $hasXColumns && preg_match('/^x(\d+)$/', $column['key'], $match)
+                            && $index > 0 && $columns[$index - 1]['key'] === 'p' . $match[1];
+                        if ($is_points || $is_tenx)
+                        {
+                            $subheading = $is_points ? 'PKT' : '10X';
+                            $out .= $this->text(
+                                $x + ($width - $this->text_width($subheading, 8)) / 2.0,
+                                $y + 7.0, $subheading, 8, '1'
+                            );
+                            if ($is_tenx)
+                            {
+                                $pair_width = $widths[$index - 1] + $width;
+                                $pair_x = $x - $widths[$index - 1];
+                                $month = preg_replace('/\s+PKT$/u', '', (string) $columns[$index - 1]['title']);
+                                $month = $this->fit_header_text($month, $pair_width - 6.0);
+                                $out .= $this->text(
+                                    $pair_x + ($pair_width - $this->text_width($month, 8)) / 2.0,
+                                    $y + 27.0, $month, 8, '1'
+                                );
+                                $out .= '0.72 G 0.55 w ' . sprintf(
+                                    '%.2F %.2F m %.2F %.2F l S',
+                                    $pair_x, $y + 19.0, $pair_x + $pair_width, $y + 19.0
+                                ) . "\n";
+                            }
+                        }
+                        else
+                        {
+                            // Other headings keep the previous indentation and wrapping.
+                            $header_padding = $index === 0 ? 3.0 : 15.0;
+                            $headingLines = $this->header_lines(
+                                (string) $column['title'], $width - $header_padding - 3.0
+                            );
+                            if (count($headingLines) > 1)
+                            {
+                                $out .= $this->text($x + $header_padding, $y + 19.0, $headingLines[0], 8, '1');
+                                $out .= $this->text($x + $header_padding, $y + 8.0, $headingLines[1], 8, '1');
+                            }
+                            elseif ($headingLines)
+                            {
+                                $out .= $this->text($x + $header_padding, $y + 13.0, $headingLines[0], 8, '1');
+                            }
+                        }
+                        // The full-height separator is drawn after all cell backgrounds.
+                        $x += $width;
                     }
-                    $out .= $this->text($text_x, $y + 7.0, $display, 8);
-                    // The full-height separator is drawn after all cell backgrounds.
-                    $x += $width;
+                    $out .= $this->line($margin, $y, $x, $y);
+
+                    foreach ($pageRows as $index => $record)
+                    {
+                        $y -= $rowH;
+                        $x = $margin;
+                        foreach ($columns as $j => $column)
+                        {
+                            $width = $widths[$j];
+                            $out .= $this->rect($x, $y, $width, $rowH,
+                                ($rowPageIndex * $rowsPerPage + $index) % 2 ? '0.95 0.95 0.95' : '0.84 0.84 0.84');
+                            $value = $record[$column['key']] ?? null;
+                            $display = $value === null ? '-' : (string) $value;
+                            // Indent non-ranking columns 12 pt further without moving rank numbers.
+                            $is_rank = $column['key'] === 'rank';
+                            $padding = $is_rank ? 3.0 : 15.0;
+                            $display = $this->abbreviate($display,
+                                max(2, (int) (($width - $padding - 3.0) / 5.0)));
+                            // Keep numeric rankings right-aligned at their existing position.
+                            $text_x = $is_rank && ctype_digit($display)
+                                ? $x + $width - 18.0 - $this->rank_width($display)
+                                : $x + $padding;
+                            // Small paired month values are easier to scan when centered.
+                            if ($hasXColumns && preg_match('/^[px]\d+$/', $column['key']))
+                            {
+                                $text_x = $x + ($width - $this->text_width($display, 8)) / 2.0;
+                            }
+                            $out .= $this->text($text_x, $y + 7.0, $display, 8);
+                            // The full-height separator is drawn after all cell backgrounds.
+                            $x += $width;
+                        }
+                        $out .= $this->line($margin, $y, $x, $y);
+                    }
+
+                    // Draw the separators last: otherwise the next cell fill can obscure
+                    // half of each line. Light lines divide the dark header, dark lines
+                    // divide the alternating body rows.
+                    $separatorX = $margin;
+                    foreach ($widths as $index => $width)
+                    {
+                        $out .= $this->vertical_separator($separatorX, $y, $headerBottom, false);
+                        // The middle of a PKT/10X pair does not split its month heading.
+                        $is_inner_pair = $hasXColumns && $index > 0
+                            && preg_match('/^p(\d+)$/', $columns[$index - 1]['key'], $match)
+                            && $columns[$index]['key'] === 'x' . $match[1];
+                        $header_top = $is_inner_pair ? $headerBottom + 19.0 : $headerBottom + $headerH;
+                        $out .= $this->vertical_separator($separatorX, $headerBottom, $header_top, true);
+                        $separatorX += $width;
+                    }
+                    $out .= $this->vertical_separator($separatorX, $y, $headerBottom, false);
+                    $out .= $this->vertical_separator($separatorX, $headerBottom, $headerBottom + $headerH, true);
+                    $out .= "Q\n";
+
+                    $out .= $this->text($margin, 32.0,
+                        'OSL | ' . $this->abbreviate($competition['title'], 80) . ' | ' . $pageNumber . '/' . $totalPages, 9);
+                    $pages[] = ['content' => $out, 'width' => $pageW, 'height' => $pageH];
                 }
-                $out .= $this->line($margin, $y, $x, $y);
             }
-
-            // Draw the separators last: otherwise the next cell fill can obscure
-            // half of each line. Light lines divide the dark header, dark lines
-            // divide the alternating body rows.
-            $separatorX = $margin;
-            foreach ($widths as $index => $width)
-            {
-                $out .= $this->vertical_separator($separatorX, $y, $headerBottom, false);
-                // The middle of a PKT/10X pair does not split its month heading.
-                $is_inner_pair = $hasXColumns && $index > 0
-                    && preg_match('/^p(\d+)$/', $columns[$index - 1]['key'], $match)
-                    && $columns[$index]['key'] === 'x' . $match[1];
-                $header_top = $is_inner_pair ? $headerBottom + 19.0 : $headerBottom + $headerH;
-                $out .= $this->vertical_separator($separatorX, $headerBottom, $header_top, true);
-                $separatorX += $width;
-            }
-            $out .= $this->vertical_separator($separatorX, $y, $headerBottom, false);
-            $out .= $this->vertical_separator($separatorX, $headerBottom, $headerBottom + $headerH, true);
-            $out .= "Q\n";
-
-            $out .= $this->text($margin, 32.0, 'OSL | ' . $competition['title'], 9);
-            $pages[] = ['content' => $out, 'width' => $pageW, 'height' => $pageH];
         }
 
         if (!$pages)
@@ -463,19 +549,9 @@ class pdf_writer
         $pages = [];
         foreach ($this->table_pages($report) as $page)
         {
-            // PDF page dimensions are limited to 14,400 points. In the rare
-            // case of an exceptionally large table, scale the whole page as
-            // one unit; never split its columns or rows.
-            $scale = min(1.0, 14400.0 / max($page['width'], $page['height']));
-            $width = $page['width'] * $scale;
-            $height = $page['height'] * $scale;
-            $content = $page['content'];
-            if ($scale < 1.0)
-            {
-                $content = sprintf("q %.8F 0 0 %.8F 0 0 cm\n", $scale, $scale) . $content . "Q\n";
-            }
-            $contentObj = $this->add($this->compressed($content));
-            $mediaBox = sprintf('[0 0 %.2F %.2F]', $width, $height);
+            // Table pages are fixed landscape A3; no whole-page shrink.
+            $contentObj = $this->add($this->compressed($page['content']));
+            $mediaBox = sprintf('[0 0 %.2F %.2F]', $page['width'], $page['height']);
             $pageObj = $this->add('<< /Type /Page /Parent ' . $pagesObj . ' 0 R /MediaBox ' . $mediaBox . ' /Resources << /Font << /F1 ' . $this->fontObj . ' 0 R >> >> /Contents ' . $contentObj . ' 0 R >>');
             $pages[] = $pageObj . ' 0 R';
         }
