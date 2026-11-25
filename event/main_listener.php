@@ -133,10 +133,10 @@ class main_listener implements EventSubscriberInterface
         return (int) ($row['topic_first_post_id'] ?? 0);
     }
 
-    /** Current time for OSL submission windows only (real time by default). */
+    /** Real system time for OSL submission windows. */
     protected function osl_now(): int
     {
-        return \tennano\osl\service\test_clock::now($this->request);
+        return time();
     }
 
     protected function format_date(int $timestamp): string
@@ -377,16 +377,6 @@ class main_listener implements EventSubscriberInterface
         $first_id = $this->get_first_post_id($topic_id, $data);
         $league = $topic_id ? $this->get_cached_league($topic_id) : null;
         $is_edit_first = $mode === 'edit' && $post_id > 0 && $post_id === $first_id;
-        $simulated_now = \tennano\osl\service\test_clock::simulated_time($this->request);
-        if ($simulated_now !== null)
-        {
-            $this->template->assign_vars([
-                'S_OSL_TEST_CLOCK_ACTIVE' => true,
-                'OSL_TEST_CLOCK_DATETIME' => (new \DateTimeImmutable('@' . $simulated_now))
-                    ->setTimezone(new \DateTimeZone('Europe/Warsaw'))->format('Y-m-d H:i'),
-            ]);
-        }
-
         if (($mode === 'post' || $is_edit_first) && $this->creator_permissions->can_create($forum_id))
         {
             $start = $this->request->variable('osl_start_date', $league
