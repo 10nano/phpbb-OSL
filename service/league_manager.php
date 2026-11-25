@@ -215,7 +215,10 @@ class league_manager
                 $round_scores[$index] = $entry['score'];
                 $round_tenx[$index] = $entry['ten_x'];
             }
-            $total_all = array_sum(array_column($numeric, 'score'));
+            // Scores are stored with two decimal places. Normalize sums
+            // before ranking so 0.1 + 0.2 ties exactly with 0.3.
+            $total_all = round(array_sum(array_column($numeric, 'score')), 2);
+            $total_best = round(array_sum(array_column($best, 'score')), 2);
             $standings[] = [
                 'user_id' => $player['user_id'],
                 'username' => $player['username'],
@@ -223,11 +226,11 @@ class league_manager
                 'group' => $player['group'],
                 'round_scores' => $round_scores,
                 'round_tenx' => $round_tenx,
-                'total_best' => array_sum(array_column($best, 'score')),
+                'total_best' => $total_best,
                 'tenx_best' => array_sum(array_column($best, 'ten_x')),
                 'total_all' => $total_all,
                 'starts' => $starts,
-                'average' => $starts ? $total_all / $starts : 0,
+                'average' => $starts ? round($total_all / $starts, 8) : 0,
                 'highest_single' => $starts ? $numeric[0]['score'] : 0,
                 'rank' => 0,
             ];
