@@ -11,7 +11,6 @@ if (empty($lang) || !is_array($lang))
 }
 
 $lang = array_merge($lang, [
-    'OSL_TEST_CLOCK_WARNING' => 'Warning! OSL test clock is enabled',
     'OSL_POST_MATCH_DATE' => 'Match date',
     'OSL_POST_QUALIFIED_ROUND' => 'Qualified for',
     'OSL_POST_NICK' => 'Username',
