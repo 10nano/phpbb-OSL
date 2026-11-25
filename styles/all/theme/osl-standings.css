@@ -455,18 +455,29 @@ textarea#message.osl-reply-instructions-placeholder::-webkit-input-placeholder {
 #osl-league-panel .osl-decimal-config,
 #osl-league-panel .osl-tenx-config { white-space: nowrap; }
 #osl-result-panel .osl-score-inputs { flex-wrap: wrap; gap: 14px; }
-/* Controlled numeric entry keeps the familiar up/down controls while
-   preventing extra decimal digits and pasted nonnumeric characters. */
+/* Compact, strictly controlled score/10X fields with integer or tenth steps. */
 #osl-result-panel .osl-score-spinbox {
     display: inline-flex;
     align-items: stretch;
+    flex: 0 0 116px !important;
+    width: 116px !important;
+    max-width: 116px;
+    min-width: 0;
     height: 29px;
     box-sizing: border-box;
 }
+#osl-result-panel .osl-score-spinbox.osl-tenx-spinbox {
+    flex-basis: 95px !important;
+    width: 95px !important;
+    max-width: 95px;
+}
 #osl-result-panel .osl-score-spinbox input.osl-score-value {
-    width: 95px;
-    min-width: 0;
+    flex: 1 1 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
     height: 29px;
+    padding: 3px 5px;
     box-sizing: border-box;
     border-radius: 0 !important;
     margin: 0 !important;
@@ -501,7 +512,6 @@ textarea#message.osl-reply-instructions-placeholder::-webkit-input-placeholder {
 #osl-result-panel .osl-score-stepper button:hover {
     background: #d0d0d0 !important;
 }
-#osl-result-panel .osl-tenx-result-input { width: 75px; }
 .osl-standings table.osl-results-table .osl-col-tenx { min-width: 55px; }
 
 /* Back to the current forum from the league result-entry tab. */
