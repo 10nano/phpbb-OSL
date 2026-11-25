@@ -520,9 +520,23 @@ textarea#message.osl-reply-instructions-placeholder::-webkit-input-placeholder {
 }
 .osl-standings table.osl-results-table .osl-col-tenx { min-width: 55px; }
 
-/* Back to the current forum from the league result-entry tab. */
-#osl-result-panel .osl-result-back {
-    margin: 12px 0 0 76px;
+/* Return and Submit share one horizontal row. Grid keeps Submit
+   centered in the whole result panel, not just in the remaining space. */
+#osl-result-panel .osl-result-action-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 12px;
+    margin: 12px 0 8px;
+}
+#osl-result-panel .osl-result-action-row .osl-result-back {
+    grid-column: 1;
+    justify-self: start;
+    margin: 0 0 0 76px;
+}
+#osl-result-panel .osl-result-action-row .osl-submit-row {
+    grid-column: 2;
+    margin: 0;
 }
 #osl-result-panel .osl-result-back-button {
     display: inline-block;
@@ -544,7 +558,17 @@ textarea#message.osl-reply-instructions-placeholder::-webkit-input-placeholder {
     text-decoration: none !important;
 }
 @media (max-width: 700px) {
-    #osl-result-panel .osl-result-back { margin-left: 0; }
+    #osl-result-panel .osl-result-action-row {
+        grid-template-columns: minmax(0, 1fr);
+        row-gap: 10px;
+    }
+    #osl-result-panel .osl-result-action-row .osl-result-back {
+        margin-left: 0;
+    }
+    #osl-result-panel .osl-result-action-row .osl-submit-row {
+        grid-column: 1;
+        justify-self: center;
+    }
 }
 
 /* The previous-round selector is rendered only while grace days are active. */
