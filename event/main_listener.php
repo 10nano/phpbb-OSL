@@ -203,6 +203,30 @@ class main_listener implements EventSubscriberInterface
         return 0;
     }
 
+    /** Only whole points or tenths are allowed, according to the series configuration. */
+    protected function valid_score_precision(float $value, bool $decimal_enabled): bool
+    {
+        if (!is_finite($value))
+        {
+            return false;
+        }
+        $units = $decimal_enabled ? 10.0 : 1.0;
+        return abs($value * $units - round($value * $units)) < 0.000001;
+    }
+
+    /** A discipline needs fractional totals when any of its series uses tenths. */
+    protected function competition_has_decimal_scores(array $competition): bool
+    {
+        foreach ($competition['fields_schema'] as $field)
+        {
+            if (!empty($field['decimal_enabled']))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** Historical series may contain a now-unused, manually entered shot count. */
     protected function comparable_fields_schema(array $fields): array
     {
@@ -222,6 +246,7 @@ class main_listener implements EventSubscriberInterface
         $field_names = $this->request->variable('osl_comp_field_name', [['']], true);
         $field_mins = $this->request->variable('osl_comp_field_min', [[0.0]]);
         $field_maxs = $this->request->variable('osl_comp_field_max', [[0.0]]);
+        $field_decimal = $this->request->variable('osl_comp_field_decimal', [[0]]);
         $field_tenx = $this->request->variable('osl_comp_field_tenx', [[0]]);
         $output = [];
         foreach ($names as $slot => $name)
@@ -250,7 +275,11 @@ class main_listener implements EventSubscriberInterface
                         'min' => (float) ($field_mins[$slot][$field_slot] ?? 0),
                         'max' => (float) ($field_maxs[$slot][$field_slot] ?? 0),
                     ];
-                    // Fields without 10X keep their existing JSON representation.
+                    // Preserve the JSON representation of existing whole-point series.
+                    if (!empty($field_decimal[$slot][$field_slot]))
+                    {
+                        $definition['decimal_enabled'] = true;
+                    }
                     if (!empty($field_tenx[$slot][$field_slot]))
                     {
                         $definition['ten_x_enabled'] = true;
@@ -415,6 +444,7 @@ class main_listener implements EventSubscriberInterface
                         'NAME' => $this->e($field['name']),
                         'MIN' => $field['min'],
                         'MAX' => $field['max'],
+                        'DECIMAL_ENABLED' => !empty($field['decimal_enabled']),
                         'TENX_ENABLED' => !empty($field['ten_x_enabled']),
                     ]);
                 }
@@ -548,6 +578,7 @@ class main_listener implements EventSubscriberInterface
                     'MIN' => $field['min'],
                     'MAX' => $field['max'],
                     'VALUE' => $this->e($val),
+                    'DECIMAL_ENABLED' => !empty($field['decimal_enabled']),
                     'TENX_ENABLED' => $tenx_enabled,
                     'TENX_MAX' => $this->tenx_shot_limit($field),
                     'TENX_VALUE' => $this->e($tenx_value),
@@ -633,6 +664,12 @@ class main_listener implements EventSubscriberInterface
                         if ($field['min'] > $field['max'])
                         {
                             $errors[] = $this->language->lang('OSL_ERR_INVALID_RANGE');
+                        }
+                        $decimal_enabled = !empty($field['decimal_enabled']);
+                        if (!$this->valid_score_precision((float) $field['min'], $decimal_enabled)
+                            || !$this->valid_score_precision((float) $field['max'], $decimal_enabled))
+                        {
+                            $errors[] = $this->language->lang('OSL_ERR_FIELD_PRECISION', $this->e($field['name']));
                         }
                         if (!empty($field['ten_x_enabled']) && $this->tenx_shot_limit($field) < 1)
                         {
@@ -774,9 +811,21 @@ class main_listener implements EventSubscriberInterface
                 foreach ($comp['fields_schema'] as $index => $field)
                 {
                     $value = trim((string) ($scores[$id][$index] ?? ''));
-                    if ($value === '' || !is_numeric(str_replace(',', '.', $value)) ||
-                        (float) str_replace(',', '.', $value) < $field['min'] ||
-                        (float) str_replace(',', '.', $value) > $field['max'])
+                    $decimal_enabled = !empty($field['decimal_enabled']);
+                    $normalized = str_replace(',', '.', $value);
+                    $valid_format = preg_match($decimal_enabled
+                        ? '/^-?[0-9]+(?:\\.[0-9])?$/D'
+                        : '/^-?[0-9]+$/D', $normalized) === 1;
+                    if (!$valid_format || !is_numeric($normalized)
+                        || !$this->valid_score_precision((float) $normalized, $decimal_enabled))
+                    {
+                        $errors[] = $this->e($comp['title']) . ': ' . $this->language->lang(
+                            'OSL_ERR_SCORE_PRECISION', $this->e($field['name']),
+                            $decimal_enabled ? '0,1' : '1'
+                        );
+                    }
+                    elseif ((float) $normalized < (float) $field['min'] - 0.000001
+                        || (float) $normalized > (float) $field['max'] + 0.000001)
                     {
                         $errors[] = $this->e($comp['title']) . ': ' . $this->language->lang('OSL_ERR_SCORE_RANGE', $this->e($field['name']), $field['min'], $field['max']);
                     }
@@ -1184,7 +1233,8 @@ class main_listener implements EventSubscriberInterface
 
                 $post_row['osl_post_result_groups'][$group_indexes[$key]]['competitions'][] = [
                     'NAME' => $this->e($league['competitions'][$comp_id]['title']),
-                    'TOTAL' => number_format((float) $result['total_score'], 2, '.', ''),
+                    'TOTAL' => number_format((float) $result['total_score'],
+                        $this->competition_has_decimal_scores($league['competitions'][$comp_id]) ? 1 : 2, '.', ''),
                 ];
             }
         }
