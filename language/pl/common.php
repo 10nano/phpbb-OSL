@@ -70,6 +70,7 @@ $lang = array_merge($lang, [
 	'OSL_RESULT_REPORTED_THIS_MONTH' => 'wyniki w tej konkurencji zostały zgłoszone w tym miesiącu',
 	'OSL_ERR_DUPLICATE_PERIOD' => 'Ten zawodnik zgłosił już wynik w tej konkurencji i rundzie (miesiącu).',
 	'OSL_ERR_SCORE_RANGE'      => 'Wynik dla pola „%1$s” musi mieścić się w przedziale od %2$s do %3$s.',
+	'OSL_SCORE_VALUE_NOT_ALLOWED' => 'Wartość %s jest niedozwolona.',
 	'OSL_ERR_FIELD_PRECISION'  => 'W serii „%s” wartości Min. pkt i Max. pkt muszą być całkowite albo mieć dokładność do 0,1, zależnie od opcji „Dziesiętne”.',
 	'OSL_ERR_SCORE_PRECISION_INTEGER' => 'Wynik w serii „%s” musi być liczbą całkowitą.',
 	'OSL_ERR_SCORE_PRECISION_DECIMAL' => 'Wynik w serii „%s” może mieć najwyżej jedną cyfrę po przecinku.',
