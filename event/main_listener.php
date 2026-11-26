@@ -724,7 +724,7 @@ class main_listener implements EventSubscriberInterface
             if ($selected && $league['groups_enabled'])
             {
                 $group = trim($this->request->variable('osl_shooter_group', '', true));
-                if (utf8_strlen($group) > 100)
+                if (utf8_strlen(html_entity_decode($group, ENT_QUOTES, 'UTF-8')) > 20)
                 {
                     $errors[] = $this->language->lang('OSL_ERR_GROUP_LENGTH');
                 }

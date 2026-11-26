@@ -135,9 +135,12 @@
 .osl-post-results a:hover {
     text-decoration: underline !important;
 }
-.osl-standings table.osl-results-table .osl-col-rank { min-width: 42px; }
-.osl-standings table.osl-results-table .osl-col-group { min-width: 50px; }
-.osl-standings table.osl-results-table .osl-col-nick { min-width: 85px; }
+.osl-standings table.osl-results-table .osl-col-rank { min-width: 30px; }
+.osl-standings table.osl-results-table .osl-col-starts { min-width: 28px; }
+.osl-standings table.osl-results-table .osl-col-rank,
+.osl-standings table.osl-results-table .osl-col-starts { padding-left: 3px !important; padding-right: 3px !important; }
+.osl-standings table.osl-results-table .osl-col-group { min-width: 35px; }
+.osl-standings table.osl-results-table .osl-col-nick { min-width: 50px; }
 .osl-standings table.osl-results-table .osl-col-round { min-width: 35px; }
 .osl-standings table.osl-results-table .osl-col-summary { min-width: 44px; }
 
