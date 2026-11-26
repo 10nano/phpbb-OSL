@@ -325,6 +325,36 @@ document.addEventListener('DOMContentLoaded', function () {
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var invalidScoreMessage = document.getElementById('osl-result-panel').dataset.invalidScoreMessage;
+    var popup = document.createElement('div');
+    popup.className = 'osl-score-warning';
+    popup.setAttribute('role', 'alert');
+    popup.hidden = true;
+    document.body.appendChild(popup);
+    var popupTimer;
+
+    function hideWarning() {
+        window.clearTimeout(popupTimer);
+        popup.hidden = true;
+        popup.textContent = '';
+    }
+
+    function showWarning(input, value) {
+        hideWarning();
+        popup.textContent = invalidScoreMessage.replace('%s', function () { return value; });
+        popup.hidden = false;
+        var rect = input.getBoundingClientRect();
+        var left = Math.max(8, Math.min(rect.left, document.documentElement.clientWidth - popup.offsetWidth - 8));
+        var top = rect.bottom + 7;
+        var above = top + popup.offsetHeight > document.documentElement.clientHeight - 8;
+        if (above) { top = Math.max(8, rect.top - popup.offsetHeight - 7); }
+        popup.classList.toggle('osl-score-warning-above', above);
+        popup.style.left = left + 'px';
+        popup.style.top = top + 'px';
+        popupTimer = window.setTimeout(hideWarning, 3500);
+    }
+
+    window.addEventListener('resize', hideWarning);
+    window.addEventListener('scroll', hideWarning, true);
     // A text input allows exact filtering (including paste and cursor edits).
     // Native number controls expose neither selectionStart nor selectionEnd,
     // so their built-in spinner is replaced by these accessible step buttons.
@@ -386,19 +416,16 @@ document.addEventListener('DOMContentLoaded', function () {
             return input.value.slice(0, input.selectionStart) + inserted +
                 input.value.slice(input.selectionEnd);
         }
-        function warnOutOfRange(value) {
-            // Do not show a range warning for a sign, an empty field or
-            // a format-only error, such as a second decimal separator.
-            if (!/^-?[0-9]+(?:[.,][0-9]*)?$/.test(value)) { return; }
-            var number = Number(value.replace(',', '.'));
-            if (!Number.isFinite(number) || number < minimum || number > maximum) {
-                window.alert(invalidScoreMessage.replace('%s', function () { return value; }));
-            }
+        function warnRejectedValue(value) {
+            // Also report a numeric value rejected for excess decimal precision,
+            // even when its magnitude would be inside the configured range.
+            if (!/^-?(?:[0-9]+(?:[.,][0-9]*)?|[.,][0-9]+)$/.test(value)) { return; }
+            showWarning(input, value);
         }
 
         function reject(event, value) {
             event.preventDefault();
-            warnOutOfRange(value);
+            warnRejectedValue(value);
         }
 
         function remember(notify) {
@@ -410,7 +437,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 input.value = lastGood;
                 var position = Math.min(lastPosition, input.value.length);
                 input.setSelectionRange(position, position);
-                if (notify !== false) { warnOutOfRange(rejected); }
+                if (notify !== false) { warnRejectedValue(rejected); }
             }
             if (inRange(input.value)) {
                 input.setAttribute('aria-valuenow', String(Number(input.value.replace(',', '.'))));
@@ -454,7 +481,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 var trimmed = input.value.replace(/[.,]$/, '');
                 input.value = inRange(trimmed) ? trimmed : '';
                 remember();
-                if (input.value === '') { warnOutOfRange(trimmed); }
+                if (input.value === '') { warnRejectedValue(trimmed); }
             }
         });
 

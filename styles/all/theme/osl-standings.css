@@ -628,3 +628,39 @@ textarea#message.osl-reply-instructions-placeholder::-webkit-input-placeholder {
     color: #fff !important;
     text-decoration: none !important;
 }
+
+/* Non-modal, theme-independent warning beside the rejected score field. */
+.osl-score-warning {
+    position: fixed;
+    z-index: 10000;
+    box-sizing: border-box;
+    max-width: calc(100vw - 16px);
+    padding: 9px 12px;
+    border: 1px solid #b32626;
+    border-left: 4px solid #b32626;
+    border-radius: 5px;
+    background: #fff;
+    color: #a00000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .24);
+    font: 600 13px/1.4 Arial, sans-serif;
+    overflow-wrap: anywhere;
+    pointer-events: none;
+}
+.osl-score-warning[hidden] { display: none !important; }
+.osl-score-warning::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 12px;
+    width: 8px;
+    height: 8px;
+    border-top: 1px solid #b32626;
+    border-left: 1px solid #b32626;
+    background: #fff;
+    transform: rotate(45deg);
+}
+.osl-score-warning.osl-score-warning-above::before {
+    top: auto;
+    bottom: -5px;
+    transform: rotate(225deg);
+}
