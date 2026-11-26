@@ -1234,7 +1234,7 @@ class main_listener implements EventSubscriberInterface
                 $post_row['osl_post_result_groups'][$group_indexes[$key]]['competitions'][] = [
                     'NAME' => $this->e($league['competitions'][$comp_id]['title']),
                     'TOTAL' => number_format((float) $result['total_score'],
-                        $this->competition_has_decimal_scores($league['competitions'][$comp_id]) ? 1 : 2, '.', ''),
+                        $this->competition_has_decimal_scores($league['competitions'][$comp_id]) ? 1 : 0, '.', ''),
                     'HAS_TENX' => $this->manager->competition_has_tenx($league['competitions'][$comp_id]),
                     'TENX' => (int) ($result['total_x'] ?? 0),
                 ];
