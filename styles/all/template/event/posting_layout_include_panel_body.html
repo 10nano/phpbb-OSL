@@ -254,7 +254,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <dl class="osl-member-group">
                 <dt><label for="osl_shooter_group">{L_OSL_RESULT_GROUP}</label></dt>
                 <dd>
-                    <input class="inputbox autowidth" type="text" id="osl_shooter_group" name="osl_shooter_group" value="{OSL_SHOOTER_GROUP}" maxlength="100" size="40" />
+                    <input class="inputbox autowidth" type="text" id="osl_shooter_group" name="osl_shooter_group" value="{OSL_SHOOTER_GROUP}" data-max-length="20" data-length-message="{L_OSL_ERR_GROUP_LENGTH}" size="20" />
                     <p><small>{L_OSL_GROUP_HELP}</small></p>
                 </dd>
             </dl>
@@ -338,9 +338,9 @@ document.addEventListener('DOMContentLoaded', function () {
         popup.textContent = '';
     }
 
-    function showWarning(input, value) {
+    function showWarning(input, message) {
         hideWarning();
-        popup.textContent = invalidScoreMessage.replace('%s', function () { return value; });
+        popup.textContent = message;
         popup.hidden = false;
         var rect = input.getBoundingClientRect();
         var left = Math.max(8, Math.min(rect.left, document.documentElement.clientWidth - popup.offsetWidth - 8));
@@ -355,6 +355,69 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.addEventListener('resize', hideWarning);
     window.addEventListener('scroll', hideWarning, true);
+    // Count Unicode characters rather than UTF-16 code units. A native
+    // maxlength would silently truncate paste and hide the rejected edit.
+    var groupInput = document.getElementById('osl_shooter_group');
+    if (groupInput) {
+        var groupLimit = Number(groupInput.dataset.maxLength);
+        var lastGroup = groupInput.value;
+        var lastGroupPosition = groupInput.selectionStart;
+
+        function groupLength(value) {
+            return Array.from(value.normalize('NFC')).length;
+        }
+
+        function groupCanEdit(value) {
+            var length = groupLength(value);
+            // Allow old, overlong names to be shortened without data loss.
+            return length <= groupLimit || length < groupLength(lastGroup);
+        }
+
+        function groupCandidate(inserted) {
+            return groupInput.value.slice(0, groupInput.selectionStart) + inserted +
+                groupInput.value.slice(groupInput.selectionEnd);
+        }
+
+        function groupWarning() {
+            showWarning(groupInput, groupInput.dataset.lengthMessage);
+        }
+
+        function rejectGroup(event, inserted) {
+            if (!groupCanEdit(groupCandidate(inserted))) {
+                event.preventDefault();
+                groupWarning();
+            }
+        }
+
+        groupInput.addEventListener('beforeinput', function (event) {
+            if (event.isComposing || !event.cancelable || event.data === null ||
+                event.inputType.indexOf('insert') !== 0) { return; }
+            rejectGroup(event, event.data);
+        });
+        groupInput.addEventListener('paste', function (event) {
+            if (event.clipboardData) { rejectGroup(event, event.clipboardData.getData('text')); }
+        });
+
+        function rememberGroup() {
+            if (groupCanEdit(groupInput.value) || groupInput.value === lastGroup) {
+                lastGroup = groupInput.value;
+                lastGroupPosition = groupInput.selectionStart;
+            } else {
+                groupInput.value = lastGroup;
+                var position = Math.min(lastGroupPosition, lastGroup.length);
+                groupInput.setSelectionRange(position, position);
+                groupWarning();
+            }
+        }
+        groupInput.addEventListener('input', function (event) {
+            if (!event.isComposing) { rememberGroup(); }
+        });
+        groupInput.addEventListener('compositionend', rememberGroup);
+        groupInput.addEventListener('blur', function () {
+            if (groupLength(groupInput.value) > groupLimit) { groupWarning(); }
+        });
+    }
+
     // A text input allows exact filtering (including paste and cursor edits).
     // Native number controls expose neither selectionStart nor selectionEnd,
     // so their built-in spinner is replaced by these accessible step buttons.
@@ -420,7 +483,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Also report a numeric value rejected for excess decimal precision,
             // even when its magnitude would be inside the configured range.
             if (!/^-?(?:[0-9]+(?:[.,][0-9]*)?|[.,][0-9]+)$/.test(value)) { return; }
-            showWarning(input, value);
+            showWarning(input, invalidScoreMessage.replace('%s', function () { return value; }));
         }
 
         function reject(event, value) {
