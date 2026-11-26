@@ -332,15 +332,56 @@ document.addEventListener('DOMContentLoaded', function () {
             ? (negativeAllowed ? /^-?[0-9]*(?:[.,][0-9]?)?$/ : /^[0-9]*(?:[.,][0-9]?)?$/)
             : (negativeAllowed ? /^-?[0-9]*$/ : /^[0-9]*$/);
         var completed = decimal ? /^-?[0-9]+(?:[.,][0-9])?$/ : /^-?[0-9]+$/;
-        var lastGood = input.value;
-        var lastPosition = input.value.length;
+        var factor = decimal ? 10 : 1;
+        var minUnits = Math.ceil(minimum * factor - 0.000001);
+        var maxUnits = Math.floor(maximum * factor + 0.000001);
+
+        function inRange(value) {
+            if (!completed.test(value)) { return false; }
+            var number = Number(value.replace(',', '.'));
+            return Number.isFinite(number) && number >= minimum && number <= maximum;
+        }
+
+        // Permit only valid values or prefixes that can become valid by
+        // appending digits (e.g. 1, 10, 100 for a range starting at 100).
+        function canEdit(value) {
+            if (!allowed.test(value)) { return false; }
+            if (value === '' || inRange(value)) { return true; }
+            var negative = value.charAt(0) === '-';
+            var low = negative ? Math.max(0, -maxUnits) : Math.max(0, minUnits);
+            var high = negative ? -minUnits : maxUnits;
+            if (high < low) { return false; }
+            var unsigned = negative ? value.slice(1) : value;
+            if (unsigned === '') { return negativeAllowed && negative; }
+            var parts = unsigned.split(/[.,]/);
+            if (parts.length === 2) {
+                // Only a trailing separator can still be completed.
+                if (!parts[0] || parts[1] !== '') { return false; }
+                var base = Number(parts[0]) * factor;
+                return base <= high && base + factor - 1 >= low;
+            }
+            var prefix = Number(unsigned);
+            if (!Number.isFinite(prefix) || prefix * factor > high) { return false; }
+            // Leading zeroes can precede any nonnegative magnitude.
+            if (prefix === 0) { return true; }
+            for (var power = 1; prefix * power * factor <= high; power *= 10) {
+                var first = prefix * power * factor;
+                var last = (prefix + 1) * power * factor - 1;
+                if (first <= high && last >= low) { return true; }
+                if (power > Number.MAX_SAFE_INTEGER / 10) { break; }
+            }
+            return false;
+        }
+
+        var lastGood = canEdit(input.value) ? input.value : '';
+        var lastPosition = lastGood.length;
 
         function nextValue(inserted) {
             return input.value.slice(0, input.selectionStart) + inserted +
                 input.value.slice(input.selectionEnd);
         }
         function remember() {
-            if (allowed.test(input.value)) {
+            if (canEdit(input.value)) {
                 lastGood = input.value;
                 lastPosition = input.selectionStart;
             } else {
@@ -348,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 var position = Math.min(lastPosition, input.value.length);
                 input.setSelectionRange(position, position);
             }
-            if (completed.test(input.value)) {
+            if (inRange(input.value)) {
                 input.setAttribute('aria-valuenow', String(Number(input.value.replace(',', '.'))));
             } else {
                 input.removeAttribute('aria-valuenow');
@@ -357,7 +398,7 @@ document.addEventListener('DOMContentLoaded', function () {
         input.addEventListener('beforeinput', function (event) {
             if (event.isComposing || !event.cancelable || event.data === null) { return; }
             if (event.inputType.indexOf('insert') !== 0) { return; }
-            if (!allowed.test(nextValue(event.data))) { event.preventDefault(); }
+            if (!canEdit(nextValue(event.data))) { event.preventDefault(); }
         });
         input.addEventListener('keydown', function (event) {
             if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
@@ -366,25 +407,31 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
             if (!event.ctrlKey && !event.metaKey && !event.altKey &&
-                event.key.length === 1 && !allowed.test(nextValue(event.key))) {
+                event.key.length === 1 && !canEdit(nextValue(event.key))) {
                 event.preventDefault();
             }
         });
         input.addEventListener('paste', function (event) {
             if (!event.clipboardData) { return; }
             var pasted = event.clipboardData.getData('text');
-            if (!allowed.test(nextValue(pasted))) { event.preventDefault(); }
+            if (!inRange(nextValue(pasted))) { event.preventDefault(); }
         });
         // Catch replacements, drag/drop, autofill and mobile-keyboard edits.
         input.addEventListener('input', function (event) {
             if (!event.isComposing) { remember(); }
         });
         input.addEventListener('compositionend', remember);
+        input.addEventListener('blur', function () {
+            // Never leave an incomplete or out-of-range prefix as a score.
+            // Do not silently clamp a score to a different number.
+            if (input.value !== '' && !inRange(input.value)) {
+                var trimmed = input.value.replace(/[.,]$/, '');
+                input.value = inRange(trimmed) ? trimmed : '';
+                remember();
+            }
+        });
 
         function changeScore(direction) {
-            var factor = decimal ? 10 : 1;
-            var minUnits = Math.ceil(minimum * factor - 0.000001);
-            var maxUnits = Math.floor(maximum * factor + 0.000001);
             var value = input.value.trim();
             var number = Number(value.replace(',', '.'));
             var units = value !== '' && completed.test(value) && Number.isFinite(number)
