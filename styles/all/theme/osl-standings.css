@@ -139,8 +139,10 @@
 .osl-standings table.osl-results-table .osl-col-starts { min-width: 28px; }
 .osl-standings table.osl-results-table .osl-col-rank,
 .osl-standings table.osl-results-table .osl-col-starts { padding-left: 3px !important; padding-right: 3px !important; }
-.osl-standings table.osl-results-table .osl-col-group { min-width: 35px; }
-.osl-standings table.osl-results-table .osl-col-nick { min-width: 50px; }
+/* Reserve space for 20 characters plus horizontal padding and border.
+   Proportional-font names with wider letters can still expand the column. */
+.osl-standings table.osl-results-table .osl-col-group,
+.osl-standings table.osl-results-table .osl-col-nick { min-width: calc(20ch + 11px); }
 .osl-standings table.osl-results-table .osl-col-round { min-width: 35px; }
 .osl-standings table.osl-results-table .osl-col-summary { min-width: 44px; }
 
