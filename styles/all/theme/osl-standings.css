@@ -74,7 +74,7 @@
 .osl-standings table.osl-results-table {
     display: table;
     width: max-content;
-    min-width: 100%;
+    min-width: 0;
     margin: 0;
     padding: 0;
     background: #fff !important;
@@ -94,7 +94,7 @@
     white-space: nowrap;
     text-align: center !important;
     vertical-align: middle !important;
-    padding: 3px 10px !important;
+    padding: 3px 5px !important;
     margin: 0 !important;
     border: 1px solid #202020 !important;
     font-family: Arial, Helvetica, sans-serif !important;
@@ -135,11 +135,11 @@
 .osl-post-results a:hover {
     text-decoration: underline !important;
 }
-.osl-standings table.osl-results-table .osl-col-rank { min-width: 65px; }
-.osl-standings table.osl-results-table .osl-col-group { min-width: 75px; }
-.osl-standings table.osl-results-table .osl-col-nick { min-width: 125px; }
-.osl-standings table.osl-results-table .osl-col-round { min-width: 55px; }
-.osl-standings table.osl-results-table .osl-col-summary { min-width: 65px; }
+.osl-standings table.osl-results-table .osl-col-rank { min-width: 42px; }
+.osl-standings table.osl-results-table .osl-col-group { min-width: 50px; }
+.osl-standings table.osl-results-table .osl-col-nick { min-width: 85px; }
+.osl-standings table.osl-results-table .osl-col-round { min-width: 35px; }
+.osl-standings table.osl-results-table .osl-col-summary { min-width: 44px; }
 
 /* League configuration and result forms use the OSL color palette.
    Keep phpBB tab layout and JavaScript classes unchanged. */
@@ -520,7 +520,7 @@ textarea#message.osl-reply-instructions-placeholder::-webkit-input-placeholder {
 #osl-result-panel .osl-score-stepper button:hover {
     background: #d0d0d0 !important;
 }
-.osl-standings table.osl-results-table .osl-col-tenx { min-width: 55px; }
+.osl-standings table.osl-results-table .osl-col-tenx { min-width: 35px; }
 
 /* Return and Submit share one horizontal row. Grid keeps Submit
    centered in the whole result panel, not just in the remaining space. */
