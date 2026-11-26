@@ -169,6 +169,28 @@ class pdf_writer
         return implode('', array_slice($chars, 0, max(0, $max - 1))) . '…';
     }
 
+    /** Keep the update timestamp intact even when a long league title must be shortened. */
+    private function report_title(array $report, float $available, int $size): string
+    {
+        $title = (string) $report['title'];
+        $suffix = (string) ($report['title_suffix'] ?? '');
+        if ($this->text_width($title . $suffix, $size) <= $available)
+        {
+            return $title . $suffix;
+        }
+        $chars = preg_split('//u', $title, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        while ($chars)
+        {
+            array_pop($chars);
+            $candidate = implode('', $chars) . '…' . $suffix;
+            if ($this->text_width($candidate, $size) <= $available)
+            {
+                return $candidate;
+            }
+        }
+        return ltrim($suffix);
+    }
+
     /** Width of text at a given font size, in unscaled PDF points. */
     private function text_width(string $value, int $size = 8): float
     {
@@ -375,7 +397,7 @@ class pdf_writer
                     $y = $headerBottom;
                     $x = $margin;
                     $out = '';
-                    $out .= $this->text($margin, $pageH - 52.0, $this->abbreviate($report['title'], 92), 17);
+                    $out .= $this->text($margin, $pageH - 52.0, $this->report_title($report, $pageW - 160.0 - $margin - 10.0, 17), 17);
                     $out .= $this->text($margin, $pageH - 75.0, $this->abbreviate($competition['title'], 95), 13);
                     $out .= $this->text($pageW - 160.0, $pageH - 47.0, date('Y-m-d'), 9);
 
@@ -502,7 +524,7 @@ class pdf_writer
 
         if (!$pages)
         {
-            $pages[] = ['content' => $this->text(40, 790, $report['title'], 16),
+            $pages[] = ['content' => $this->text(40, 790, $this->report_title($report, 1111.0, 16), 16),
                 'width' => 1191.0, 'height' => 842.0];
         }
         return $pages;

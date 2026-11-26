@@ -84,6 +84,7 @@ $lang = array_merge($lang, [
     'OSL_STANDINGS_TITLE' => 'Results',
     'OSL_STANDINGS_SHORT' => '%s results',
     'OSL_STANDINGS_UPDATED' => '%1$s as of %2$s at %3$s',
+    'OSL_EXPORT_RESULTS_UPDATED' => '(results as of %1$s at %2$s)',
 	'OSL_EXPORT_PDF' => 'PDF',
 	'OSL_EXPORT_CSV' => 'CSV',
 	'OSL_COL_RANK'             => 'Rank',

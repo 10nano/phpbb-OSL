@@ -104,6 +104,11 @@ class export_controller
         $rounds = $this->manager->generate_rounds((int) $league['start_date'], (int) $league['duration_months']);
         $standings = $this->manager->get_league_standings($league);
         $report = $this->writer->build($league, $rounds, $standings, $labels);
+        $updated = $this->manager->get_results_updated_at((int) $league['league_id']);
+        if ($updated !== null)
+        {
+            $report['title_suffix'] = ' ' . $this->language->lang('OSL_EXPORT_RESULTS_UPDATED', $updated->format('d.m.Y'), $updated->format('H:i'));
+        }
         try
         {
             switch ($format)
