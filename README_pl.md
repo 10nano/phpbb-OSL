@@ -1,6 +1,6 @@
 # OSL – Internetowa Liga Strzelecka
 
-**Wersja projektu: 0.5.0-dev** (wersja rozwojowa, przed pierwszym publicznym wydaniem).
+**Wersja projektu: 0.6.0-dev** (wersja rozwojowa, przed pierwszym publicznym wydaniem).
 
 Rozszerzenie do phpBB 3.3.x (`tennano/osl`), służące do prowadzenia lig strzeleckich w tematach forum. Każda liga może obejmować wiele niezależnych konkurencji, z osobnym zgłaszaniem wyników i miesięcznymi tabelami klasyfikacji.
 
