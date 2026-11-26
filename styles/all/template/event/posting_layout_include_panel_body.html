@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <!-- ENDIF -->
 
 <!-- IF S_OSL_CAN_SUBMIT_RESULT -->
-<div class="panel bg3" id="osl-result-panel">
+<div class="panel bg3" id="osl-result-panel" data-invalid-score-message="{L_OSL_SCORE_VALUE_NOT_ALLOWED}">
     <div class="inner">
         <fieldset class="fields2">
             <input type="hidden" name="osl_form_results" value="1" />
@@ -319,6 +319,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    var invalidScoreMessage = document.getElementById('osl-result-panel').dataset.invalidScoreMessage;
     // A text input allows exact filtering (including paste and cursor edits).
     // Native number controls expose neither selectionStart nor selectionEnd,
     // so their built-in spinner is replaced by these accessible step buttons.
@@ -380,14 +381,31 @@ document.addEventListener('DOMContentLoaded', function () {
             return input.value.slice(0, input.selectionStart) + inserted +
                 input.value.slice(input.selectionEnd);
         }
-        function remember() {
+        function warnOutOfRange(value) {
+            // Do not show a range warning for a sign, an empty field or
+            // a format-only error, such as a second decimal separator.
+            if (!/^-?[0-9]+(?:[.,][0-9]*)?$/.test(value)) { return; }
+            var number = Number(value.replace(',', '.'));
+            if (!Number.isFinite(number) || number < minimum || number > maximum) {
+                window.alert(invalidScoreMessage.replace('%s', function () { return value; }));
+            }
+        }
+
+        function reject(event, value) {
+            event.preventDefault();
+            warnOutOfRange(value);
+        }
+
+        function remember(notify) {
             if (canEdit(input.value)) {
                 lastGood = input.value;
                 lastPosition = input.selectionStart;
             } else {
+                var rejected = input.value;
                 input.value = lastGood;
                 var position = Math.min(lastPosition, input.value.length);
                 input.setSelectionRange(position, position);
+                if (notify !== false) { warnOutOfRange(rejected); }
             }
             if (inRange(input.value)) {
                 input.setAttribute('aria-valuenow', String(Number(input.value.replace(',', '.'))));
@@ -398,7 +416,8 @@ document.addEventListener('DOMContentLoaded', function () {
         input.addEventListener('beforeinput', function (event) {
             if (event.isComposing || !event.cancelable || event.data === null) { return; }
             if (event.inputType.indexOf('insert') !== 0) { return; }
-            if (!canEdit(nextValue(event.data))) { event.preventDefault(); }
+            var candidate = nextValue(event.data);
+            if (!canEdit(candidate)) { reject(event, candidate); }
         });
         input.addEventListener('keydown', function (event) {
             if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
@@ -407,14 +426,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
             if (!event.ctrlKey && !event.metaKey && !event.altKey &&
-                event.key.length === 1 && !canEdit(nextValue(event.key))) {
-                event.preventDefault();
+                !event.isComposing && event.key.length === 1) {
+                var candidate = nextValue(event.key);
+                if (!canEdit(candidate)) { reject(event, candidate); }
             }
         });
         input.addEventListener('paste', function (event) {
             if (!event.clipboardData) { return; }
             var pasted = event.clipboardData.getData('text');
-            if (!inRange(nextValue(pasted))) { event.preventDefault(); }
+            var candidate = nextValue(pasted);
+            if (!inRange(candidate)) { reject(event, candidate); }
         });
         // Catch replacements, drag/drop, autofill and mobile-keyboard edits.
         input.addEventListener('input', function (event) {
@@ -428,6 +449,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 var trimmed = input.value.replace(/[.,]$/, '');
                 input.value = inRange(trimmed) ? trimmed : '';
                 remember();
+                if (input.value === '') { warnOutOfRange(trimmed); }
             }
         });
 
@@ -452,7 +474,7 @@ document.addEventListener('DOMContentLoaded', function () {
         spinbox.querySelector('.osl-score-step-down').addEventListener('click', function () {
             changeScore(-1);
         });
-        remember();
+        remember(false);
     });
     document.querySelectorAll('#osl-result-panel .osl-result-competition').forEach(function (comp) {
         var resultToggle = comp.querySelector('.osl-result-toggle');

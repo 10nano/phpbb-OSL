@@ -69,6 +69,7 @@ $lang = array_merge($lang, [
 	'OSL_RESULT_REPORTED_THIS_MONTH' => 'Results for this discipline have already been submitted this month.',
 	'OSL_ERR_DUPLICATE_PERIOD' => 'This shooter already submitted a score for this discipline and round.',
 	'OSL_ERR_SCORE_RANGE'      => 'Score for "%1$s" must be between %2$s and %3$s.',
+	'OSL_SCORE_VALUE_NOT_ALLOWED' => 'Value %s is not allowed.',
 	'OSL_ERR_FIELD_PRECISION'  => 'In series "%s", minimum and maximum points must be whole numbers or multiples of 0.1, according to the "Decimals" option.',
 	'OSL_ERR_SCORE_PRECISION_INTEGER' => 'Score for series "%s" must be a whole number.',
 	'OSL_ERR_SCORE_PRECISION_DECIMAL' => 'Score for series "%s" may have at most one decimal place.',
