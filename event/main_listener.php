@@ -1081,19 +1081,6 @@ class main_listener implements EventSubscriberInterface
         }
     }
 
-    /** Latest recorded creation/edit time of a post containing league results. */
-    protected function get_results_updated_at(int $league_id): int
-    {
-        $sql = 'SELECT MAX(p.post_time) AS latest_post, MAX(p.post_edit_time) AS latest_edit
-            FROM ' . $this->results_table . ' r
-            JOIN ' . POSTS_TABLE . ' p ON p.post_id = r.post_id
-            WHERE r.league_id = ' . $league_id;
-        $res = $this->db->sql_query($sql);
-        $row = $this->db->sql_fetchrow($res);
-        $this->db->sql_freeresult($res);
-        return max((int) ($row['latest_post'] ?? 0), (int) ($row['latest_edit'] ?? 0));
-    }
-
     public function viewtopic_modify_post_row($event)
     {
         $row = $event['row'];
@@ -1114,10 +1101,9 @@ class main_listener implements EventSubscriberInterface
             $heading = $short_name !== ''
                 ? $this->language->lang('OSL_STANDINGS_SHORT', $short_name)
                 : $this->language->lang('OSL_STANDINGS_TITLE');
-            $updated_at = $this->get_results_updated_at((int) $league['league_id']);
-            if ($updated_at > 0)
+            $updated = $this->manager->get_results_updated_at((int) $league['league_id']);
+            if ($updated !== null)
             {
-                $updated = (new \DateTimeImmutable('@' . $updated_at))->setTimezone(new \DateTimeZone('Europe/Warsaw'));
                 $heading = $this->language->lang('OSL_STANDINGS_UPDATED', $heading, $updated->format('d.m.Y'), $updated->format('H:i'));
             }
             $post_row['OSL_STANDINGS_HEADING'] = $this->e($heading);

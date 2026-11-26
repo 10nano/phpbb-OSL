@@ -115,6 +115,22 @@ class league_manager
         return $league;
     }
 
+    /** Latest recorded creation/edit time of a post containing league results. */
+    public function get_results_updated_at(int $league_id): ?\DateTimeImmutable
+    {
+        $sql = 'SELECT MAX(p.post_time) AS latest_post, MAX(p.post_edit_time) AS latest_edit
+            FROM ' . $this->results_table . ' r
+            JOIN ' . POSTS_TABLE . ' p ON p.post_id = r.post_id
+            WHERE r.league_id = ' . $league_id;
+        $res = $this->db->sql_query($sql);
+        $row = $this->db->sql_fetchrow($res);
+        $this->db->sql_freeresult($res);
+        $timestamp = max((int) ($row['latest_post'] ?? 0), (int) ($row['latest_edit'] ?? 0));
+        return $timestamp > 0
+            ? (new \DateTimeImmutable('@' . $timestamp))->setTimezone(new \DateTimeZone('Europe/Warsaw'))
+            : null;
+    }
+
     public function get_competitions(int $league_id): array
     {
         $sql = 'SELECT * FROM ' . $this->competitions_table . ' WHERE league_id = ' . $league_id . ' ORDER BY sort_order ASC, competition_id ASC';

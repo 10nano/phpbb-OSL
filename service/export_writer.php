@@ -85,7 +85,7 @@ class export_writer
     public function csv(array $report): string
     {
         $out = "\xEF\xBB\xBF";
-        $out .= $this->csv_cell($report['title']) . "\r\n\r\n";
+        $out .= $this->csv_cell($report['title'] . ($report['title_suffix'] ?? '')) . "\r\n\r\n";
         foreach ($report['competitions'] as $comp)
         {
             $out .= $this->csv_cell($comp['title']) . "\r\n";
