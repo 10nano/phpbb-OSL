@@ -381,9 +381,13 @@ textarea#message.osl-reply-instructions-placeholder::-webkit-input-placeholder {
     font-weight: 700;
 }
 #osl-league-panel .osl-decimal-config sup.osl-decimal-marker {
-    vertical-align: super;
-    font-size: 0.8em;
-    line-height: 0;
+    position: static;
+    vertical-align: baseline;
+    font-size: 1.15em;
+    line-height: 1;
+    margin-left: 1px;
+    display: inline-block;
+    transform: translateY(-0.15em);
 }
 #osl-league-panel .osl-decimal-note {
     width: max-content;
