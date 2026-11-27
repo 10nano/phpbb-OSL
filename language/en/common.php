@@ -54,6 +54,7 @@ $lang = array_merge($lang, [
 	'OSL_FIELD_MIN'            => 'Min. pts',
 	'OSL_FIELD_MAX'            => 'Max. pts',
 	'OSL_ENABLE_DECIMALS'      => 'Decimals',
+	'OSL_DECIMAL_NOTE' => 'If Decimals is selected, one decimal place is allowed; otherwise, whole numbers only.',
 	'OSL_SCORE_INCREASE' => 'Increase score',
 	'OSL_SCORE_DECREASE' => 'Decrease score',
 	'OSL_ADD_FIELD'            => '+ Add series',

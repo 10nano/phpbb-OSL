@@ -376,6 +376,24 @@ textarea#message.osl-reply-instructions-placeholder::-webkit-input-placeholder {
     gap: 5px;
     white-space: nowrap;
 }
+#osl-league-panel .osl-decimal-marker {
+    color: #d00000;
+    font-weight: 700;
+}
+#osl-league-panel .osl-decimal-config sup.osl-decimal-marker {
+    vertical-align: super;
+    font-size: 0.8em;
+    line-height: 0;
+}
+#osl-league-panel .osl-decimal-note {
+    width: max-content;
+    max-width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    font-size: 0.9em;
+    line-height: 1.4;
+    margin-top: 4px;
+}
 #osl-league-panel .osl-competition-actions { margin-top: 14px; }
 #osl-league-panel button {
     padding: 5px 9px;
