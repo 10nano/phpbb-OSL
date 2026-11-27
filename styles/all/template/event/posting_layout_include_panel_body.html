@@ -87,12 +87,13 @@
                                 <input class="inputbox osl-form-input osl-form-input-field-name" type="text" name="osl_comp_field_name[{osl_competitions.INDEX}][{osl_competitions.fields.INDEX}]" value="{osl_competitions.fields.NAME}" placeholder="{L_OSL_FIELD_NAME}" />
                                 <label>{L_OSL_FIELD_MIN}: <input class="inputbox osl-form-input osl-form-input-range" type="number" step="<!-- IF osl_competitions.fields.DECIMAL_ENABLED -->0.1<!-- ELSE -->1<!-- ENDIF -->" name="osl_comp_field_min[{osl_competitions.INDEX}][{osl_competitions.fields.INDEX}]" value="{osl_competitions.fields.MIN}" /></label>
                                 <label>{L_OSL_FIELD_MAX}: <input class="inputbox osl-form-input osl-form-input-range" type="number" step="<!-- IF osl_competitions.fields.DECIMAL_ENABLED -->0.1<!-- ELSE -->1<!-- ENDIF -->" name="osl_comp_field_max[{osl_competitions.INDEX}][{osl_competitions.fields.INDEX}]" value="{osl_competitions.fields.MAX}" /></label>
-                                <label class="osl-decimal-config"><input class="osl-decimal-toggle" type="checkbox" name="osl_comp_field_decimal[{osl_competitions.INDEX}][{osl_competitions.fields.INDEX}]" value="1"<!-- IF osl_competitions.fields.DECIMAL_ENABLED --> checked="checked"<!-- ENDIF --> /> {L_OSL_ENABLE_DECIMALS}</label>
+                                <label class="osl-decimal-config"><input class="osl-decimal-toggle" type="checkbox" aria-describedby="osl-decimal-note-{osl_competitions.INDEX}" name="osl_comp_field_decimal[{osl_competitions.INDEX}][{osl_competitions.fields.INDEX}]" value="1"<!-- IF osl_competitions.fields.DECIMAL_ENABLED --> checked="checked"<!-- ENDIF --> /> <span>{L_OSL_ENABLE_DECIMALS}<sup class="osl-decimal-marker" aria-hidden="true">*</sup></span></label>
                                 <label class="osl-tenx-config"><input class="osl-tenx-toggle" type="checkbox" name="osl_comp_field_tenx[{osl_competitions.INDEX}][{osl_competitions.fields.INDEX}]" value="1"<!-- IF osl_competitions.fields.TENX_ENABLED --> checked="checked"<!-- ENDIF --> /> {L_OSL_ENABLE_TENX}</label>
                                 <button type="button" class="button2 osl-remove-field" title="{L_OSL_REMOVE_FIELD}">{L_OSL_REMOVE_FIELD}</button>
                             </div>
                             <!-- END osl_competitions.fields -->
                         </div>
+                        <div class="osl-decimal-note" id="osl-decimal-note-{osl_competitions.INDEX}"><span class="osl-decimal-marker" aria-hidden="true">*</span> {L_OSL_DECIMAL_NOTE}</div>
                         <div class="osl-competition-actions">
                             <button type="button" class="button2 osl-add-field">{L_OSL_ADD_FIELD}</button>
                         </div>
@@ -114,7 +115,7 @@
         <input class="inputbox osl-form-input osl-form-input-field-name" type="text" name="osl_comp_field_name[__C__][__F__]" placeholder="{L_OSL_FIELD_NAME}" />
         <label>{L_OSL_FIELD_MIN}: <input class="inputbox osl-form-input osl-form-input-range" type="number" step="1" name="osl_comp_field_min[__C__][__F__]" value="0" /></label>
         <label>{L_OSL_FIELD_MAX}: <input class="inputbox osl-form-input osl-form-input-range" type="number" step="1" name="osl_comp_field_max[__C__][__F__]" value="40" /></label>
-        <label class="osl-decimal-config"><input class="osl-decimal-toggle" type="checkbox" name="osl_comp_field_decimal[__C__][__F__]" value="1" /> {L_OSL_ENABLE_DECIMALS}</label>
+        <label class="osl-decimal-config"><input class="osl-decimal-toggle" type="checkbox" aria-describedby="osl-decimal-note-__C__" name="osl_comp_field_decimal[__C__][__F__]" value="1" /> <span>{L_OSL_ENABLE_DECIMALS}<sup class="osl-decimal-marker" aria-hidden="true">*</sup></span></label>
         <label class="osl-tenx-config"><input class="osl-tenx-toggle" type="checkbox" name="osl_comp_field_tenx[__C__][__F__]" value="1" /> {L_OSL_ENABLE_TENX}</label>
         <button type="button" class="button2 osl-remove-field">{L_OSL_REMOVE_FIELD}</button>
     </div>
@@ -131,6 +132,7 @@
         </div>
         <strong>{L_OSL_FIELDS_SCHEMA}</strong>
         <div class="osl-comp-fields"></div>
+        <div class="osl-decimal-note" id="osl-decimal-note-__C__"><span class="osl-decimal-marker" aria-hidden="true">*</span> {L_OSL_DECIMAL_NOTE}</div>
         <div class="osl-competition-actions">
             <button type="button" class="button2 osl-add-field">{L_OSL_ADD_FIELD}</button>
         </div>
@@ -291,6 +293,30 @@ document.addEventListener('DOMContentLoaded', function () {
             input.step = toggle.checked ? '0.1' : '1';
         });
     }
+    // Center the shared footnote under the last series' decimal option.
+    function alignDecimalNote(comp) {
+        var fields = comp.querySelector('.osl-comp-fields');
+        var note = comp.querySelector('.osl-decimal-note');
+        var labels = fields.querySelectorAll('.osl-decimal-config');
+        if (!note || !labels.length || !fields.clientWidth) { return; }
+        var fieldRect = fields.getBoundingClientRect();
+        var labelRect = labels[labels.length - 1].getBoundingClientRect();
+        var noteWidth = note.getBoundingClientRect().width;
+        var center = labelRect.left + labelRect.width / 2 - fieldRect.left;
+        var left = Math.max(0, Math.min(fieldRect.width - noteWidth, center - noteWidth / 2));
+        note.style.marginLeft = left + 'px';
+    }
+    function alignDecimalNotes() {
+        container.querySelectorAll('.osl-competition').forEach(alignDecimalNote);
+    }
+    window.addEventListener('resize', alignDecimalNotes);
+    if (checkbox) {
+        checkbox.addEventListener('change', alignDecimalNotes);
+    }
+    if (typeof ResizeObserver !== 'undefined') {
+        var decimalNoteObserver = new ResizeObserver(alignDecimalNotes);
+        decimalNoteObserver.observe(container);
+    }
     function refreshFieldStates(comp) {
         comp.querySelectorAll('.osl-field-row').forEach(refreshDecimalStep);
         var fieldButtons = comp.querySelectorAll('.osl-remove-field');
@@ -300,6 +326,7 @@ document.addEventListener('DOMContentLoaded', function () {
             button.classList.toggle('osl-button-disabled', !canRemoveField);
             button.setAttribute('aria-disabled', canRemoveField ? 'false' : 'true');
         });
+        alignDecimalNote(comp);
     }
     function addField(comp) {
         var compIndex = comp.dataset.oslComp;
