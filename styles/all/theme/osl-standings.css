@@ -344,6 +344,17 @@ textarea#message.osl-reply-instructions-placeholder::-webkit-input-placeholder {
 #osl-league-panel .osl-form-input-short { width: 190px; }
 #osl-league-panel .osl-form-input-date { width: 150px; }
 #osl-league-panel .osl-form-input-number { width: 80px; }
+#osl-league-panel .osl-number-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px 30px;
+    min-width: 0;
+}
+#osl-league-panel .osl-number-range {
+    white-space: nowrap;
+    font-weight: normal;
+}
 #osl-league-panel .osl-form-input-comp-name { width: 300px; }
 #osl-league-panel .osl-form-input-field-name { width: 205px; }
 #osl-league-panel .osl-form-input-range { width: 95px; }
