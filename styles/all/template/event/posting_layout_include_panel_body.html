@@ -33,15 +33,15 @@
                 </div>
                 <div class="osl-config-row">
                     <label for="osl_duration_months">{L_OSL_DURATION_MONTHS}</label>
-                    <input class="inputbox osl-form-input osl-form-input-number" type="number" id="osl_duration_months" name="osl_duration_months" min="1" max="24" value="{OSL_DURATION_MONTHS}" />
+                    <input class="inputbox osl-form-input osl-form-input-number" type="number" id="osl_duration_months" name="osl_duration_months" min="1" max="24" step="1" inputmode="numeric" value="{OSL_DURATION_MONTHS}" />
                 </div>
                 <div class="osl-config-row">
                     <label for="osl_best_rounds">{L_OSL_BEST_ROUNDS}</label>
-                    <input class="inputbox osl-form-input osl-form-input-number" type="number" id="osl_best_rounds" name="osl_best_rounds" min="0" max="24" value="{OSL_BEST_ROUNDS}" />
+                    <input class="inputbox osl-form-input osl-form-input-number" type="number" id="osl_best_rounds" name="osl_best_rounds" min="1" max="{OSL_DURATION_MONTHS}" step="1" inputmode="numeric" value="{OSL_BEST_ROUNDS}" />
                 </div>
                 <div class="osl-config-row">
                     <label for="osl_extension_days">{L_OSL_EXTENSION_DAYS}</label>
-                    <input class="inputbox osl-form-input osl-form-input-number" type="number" id="osl_extension_days" name="osl_extension_days" min="0" max="7" step="1" value="{OSL_EXTENSION_DAYS}" />
+                    <input class="inputbox osl-form-input osl-form-input-number" type="number" id="osl_extension_days" name="osl_extension_days" min="0" max="7" step="1" inputmode="numeric" value="{OSL_EXTENSION_DAYS}" />
                 </div>
                 <div class="osl-config-row">
                     <label for="osl_groups_enabled">{L_OSL_GROUPS_ENABLED}</label>
@@ -131,6 +131,102 @@
 document.addEventListener('DOMContentLoaded', function () {
     var checkbox = document.getElementById('osl_enabled');
     var settings = document.getElementById('osl-league-settings');
+    // Reject out-of-range input immediately, preserving the native validation bubble.
+    var durationInput = document.getElementById('osl_duration_months');
+    var bestInput = document.getElementById('osl_best_rounds');
+    var extensionInput = document.getElementById('osl_extension_days');
+    if (durationInput && bestInput && extensionInput && checkbox) {
+        var wholeNumberMessage = '{LA_OSL_ERR_WHOLE_NUMBER}';
+        function boundedInteger(input, fallback, onAccepted) {
+            var lastValid;
+            var warningTimer;
+            function clearWarning() {
+                window.clearTimeout(warningTimer);
+                input.setCustomValidity('');
+            }
+            function setValue(value) {
+                clearWarning();
+                lastValid = Math.max(Number(input.min), Math.min(Number(input.max), value));
+                input.value = String(lastValid);
+            }
+            function reject(message) {
+                setValue(lastValid);
+                input.setCustomValidity(message || wholeNumberMessage);
+                input.reportValidity();
+                warningTimer = window.setTimeout(clearWarning, 2500);
+            }
+            var initial = input.valueAsNumber;
+            setValue(Number.isInteger(initial) ? initial : fallback);
+            input.addEventListener('keydown', function (event) {
+                clearWarning();
+                if (!event.ctrlKey && !event.metaKey && !event.altKey && !event.isComposing &&
+                    event.key.length === 1 && !/^[0-9]$/.test(event.key)) {
+                    event.preventDefault();
+                    reject(wholeNumberMessage);
+                }
+            });
+            input.addEventListener('beforeinput', function (event) {
+                if (event.cancelable && typeof event.data === 'string' &&
+                    (event.inputType || '').indexOf('insert') === 0 && !/^[0-9]+$/.test(event.data)) {
+                    event.preventDefault();
+                    reject(wholeNumberMessage);
+                }
+            });
+            input.addEventListener('paste', function (event) {
+                if (event.clipboardData && !/^[0-9]+$/.test(event.clipboardData.getData('text'))) {
+                    event.preventDefault();
+                    reject(wholeNumberMessage);
+                }
+            });
+            input.addEventListener('input', function () {
+                clearWarning();
+                if (input.validity.badInput) {
+                    reject(wholeNumberMessage);
+                } else if (input.value === '') {
+                    // A temporary empty value is necessary when replacing a number.
+                    return;
+                } else if (!/^[0-9]+$/.test(input.value)) {
+                    reject(wholeNumberMessage);
+                } else if (!input.validity.valid) {
+                    reject(input.validationMessage);
+                } else {
+                    lastValid = input.valueAsNumber;
+                    if (onAccepted) { onAccepted(lastValid); }
+                }
+            });
+            function finishEditing() {
+                if (input.value === '') { setValue(lastValid); }
+                clearWarning();
+            }
+            input.addEventListener('change', finishEditing);
+            input.addEventListener('blur', finishEditing);
+            if (input.form) {
+                // Do not block a valid restored value when the user submits the form.
+                input.form.addEventListener('pointerdown', clearWarning, true);
+                input.form.addEventListener('keydown', clearWarning, true);
+            }
+            return { setValue: setValue };
+        }
+        function updateBestLimit(months) {
+            bestInput.max = String(months);
+            if (bestField && bestInput.valueAsNumber > months) {
+                bestField.setValue(months);
+            }
+        }
+        boundedInteger(durationInput, 12, updateBestLimit);
+        bestInput.max = durationInput.value;
+        var bestField = boundedInteger(bestInput, Math.min(8, Number(durationInput.value)));
+        boundedInteger(extensionInput, 0);
+        function toggleNumberFields() {
+            [durationInput, bestInput, extensionInput].forEach(function (input) {
+                input.disabled = !checkbox.checked;
+                input.required = checkbox.checked;
+                if (input.disabled) { input.setCustomValidity(''); }
+            });
+        }
+        checkbox.addEventListener('change', toggleNumberFields);
+        toggleNumberFields();
+    }
     var topicInput = document.getElementById('subject');
     var titlePreview = document.getElementById('osl-topic-title-preview');
     if (topicInput && titlePreview) {

@@ -587,6 +587,13 @@ class main_listener implements EventSubscriberInterface
         }
     }
 
+    /** Read a whole number without silently coercing fractions or text to integers. */
+    protected function posted_league_integer(string $name): int
+    {
+        $value = $this->request->variable($name, '', false, \phpbb\request\request_interface::POST);
+        return preg_match('/\A[0-9]+\z/', $value) ? (int) $value : -1;
+    }
+
     public function posting_validate_submission($event)
     {
         if (!$event['submit'])
@@ -624,14 +631,14 @@ class main_listener implements EventSubscriberInterface
                 {
                     $errors[] = $this->language->lang('OSL_ERR_DATE_INVALID');
                 }
-                $duration = $this->request->variable('osl_duration_months', 12);
-                $best = $this->request->variable('osl_best_rounds', 8);
-                $extension_days = $this->request->variable('osl_extension_days', 0);
+                $duration = $this->posted_league_integer('osl_duration_months');
+                $best = $this->posted_league_integer('osl_best_rounds');
+                $extension_days = $this->posted_league_integer('osl_extension_days');
                 if ($extension_days < 0 || $extension_days > 7)
                 {
                     $errors[] = $this->language->lang('OSL_ERR_EXTENSION_DAYS');
                 }
-                if ($duration < 1 || $duration > 24 || $best < 0 || $best > $duration)
+                if ($duration < 1 || $duration > 24 || $best < 1 || $best > $duration)
                 {
                     $errors[] = $this->language->lang('OSL_ERR_LIMITS');
                 }
@@ -893,9 +900,9 @@ class main_listener implements EventSubscriberInterface
                 'title' => (string) $event['subject'],
                 'short_name' => $this->request->variable('osl_short_name', '', true),
                 'start_date' => $this->parse_start_month($this->request->variable('osl_start_date', '')),
-                'duration_months' => $this->request->variable('osl_duration_months', 12),
-                'best_rounds_count' => $this->request->variable('osl_best_rounds', 8),
-                'extension_days' => $this->request->variable('osl_extension_days', 0),
+                'duration_months' => $this->posted_league_integer('osl_duration_months'),
+                'best_rounds_count' => $this->posted_league_integer('osl_best_rounds'),
+                'extension_days' => $this->posted_league_integer('osl_extension_days'),
                 'groups_enabled' => json_encode($this->request->is_set_post('osl_groups_enabled')),
                 // Keep the text whether or not the instruction is enabled.
                 'reply_instructions' => $this->request->is_set_post('osl_reply_instructions')
