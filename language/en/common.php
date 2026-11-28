@@ -68,6 +68,7 @@ $lang = array_merge($lang, [
 	'OSL_GROUP_HELP'           => 'One name shared across disciplines in this league. It is remembered for future submissions and can be changed or cleared.',
 	'OSL_ERR_GROUP_LENGTH'     => 'Group/club name cannot exceed 20 characters.',
 	'OSL_ERR_DATE_OUT_OF_RANGE'=> 'The selected date is outside the league duration.',
+	'OSL_ERR_FUTURE_DATE' => 'The match date cannot be in the future.',
 	'OSL_RESULT_REPORTED_THIS_MONTH' => 'Results for this discipline have already been submitted this month.',
 	'OSL_ERR_DUPLICATE_PERIOD' => 'This shooter already submitted a score for this discipline and round.',
 	'OSL_ERR_SCORE_RANGE'      => 'Score for "%1$s" must be between %2$s and %3$s.',
