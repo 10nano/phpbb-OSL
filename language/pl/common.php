@@ -39,6 +39,7 @@ $lang = array_merge($lang, [
 	'OSL_SUBJECT_REQUIRED_HINT' => 'Wpisz w temacie posta',
 	'OSL_REGULATIONS_REMINDER' => 'Nie zapomnij w treści tego posta (powyżej) wstawić lub podać link do regulaminu ligi',
 	'OSL_SHORT_NAME'           => 'Skrótowa nazwa Ligi',
+	'OSL_ERR_SHORT_NAME_LENGTH' => 'Skrótowa nazwa ligi może mieć maksymalnie 20 znaków.',
 	'OSL_START_DATE'           => 'Początek ligi (miesiąc i rok)',
 	'OSL_DURATION_MONTHS'      => 'Czas trwania (miesiące)',
 	'OSL_EXTENSION_DAYS' => 'Wydłużenie okresu o (dni)',

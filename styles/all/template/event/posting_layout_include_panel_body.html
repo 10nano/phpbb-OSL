@@ -72,7 +72,7 @@ var oslShowWarning = (function () {
                 </div>
                 <div class="osl-config-row">
                     <label for="osl_short_name">{L_OSL_SHORT_NAME}</label>
-                    <input class="inputbox osl-form-input osl-form-input-short" type="text" id="osl_short_name" name="osl_short_name" value="{OSL_SHORT_NAME}" maxlength="50" />
+                    <input class="inputbox osl-form-input osl-form-input-short" type="text" id="osl_short_name" name="osl_short_name" value="{OSL_SHORT_NAME}" data-max-length="20" data-length-message="{L_OSL_ERR_SHORT_NAME_LENGTH}" />
                 </div>
                 <div class="osl-config-row">
                     <label for="osl_start_date">{L_OSL_START_DATE}</label>
@@ -271,6 +271,58 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         checkbox.addEventListener('change', toggleNumberFields);
         toggleNumberFields();
+    }
+    // Match the group-name limit: count Unicode characters and reject the entire excess edit.
+    var shortName = document.getElementById('osl_short_name');
+    if (shortName) {
+        var shortNameLimit = Number(shortName.dataset.maxLength);
+        var lastShortName = shortName.value;
+        var lastShortPosition = shortName.selectionStart;
+        function shortNameLength(value) {
+            return Array.from(value.normalize('NFC')).length;
+        }
+        function shortNameCanEdit(value) {
+            return shortNameLength(value) <= shortNameLimit ||
+                shortNameLength(value) < shortNameLength(lastShortName);
+        }
+        function warnShortName() {
+            oslShowWarning(shortName, shortName.dataset.lengthMessage);
+        }
+        function rejectShortName(event, inserted) {
+            var candidate = shortName.value.slice(0, shortName.selectionStart) + inserted +
+                shortName.value.slice(shortName.selectionEnd);
+            if (!shortNameCanEdit(candidate)) {
+                event.preventDefault();
+                warnShortName();
+            }
+        }
+        shortName.addEventListener('beforeinput', function (event) {
+            if (!event.isComposing && event.cancelable && typeof event.data === 'string' &&
+                (event.inputType || '').indexOf('insert') === 0) {
+                rejectShortName(event, event.data);
+            }
+        });
+        shortName.addEventListener('paste', function (event) {
+            if (event.clipboardData) { rejectShortName(event, event.clipboardData.getData('text')); }
+        });
+        function rememberShortName() {
+            if (shortNameCanEdit(shortName.value) || shortName.value === lastShortName) {
+                lastShortName = shortName.value;
+                lastShortPosition = shortName.selectionStart;
+            } else {
+                shortName.value = lastShortName;
+                var position = Math.min(lastShortPosition, lastShortName.length);
+                shortName.setSelectionRange(position, position);
+                warnShortName();
+            }
+        }
+        shortName.addEventListener('input', function (event) {
+            if (!event.isComposing) { rememberShortName(); }
+        });
+        shortName.addEventListener('compositionend', rememberShortName);
+        shortName.addEventListener('blur', function () {
+            if (shortNameLength(shortName.value) > shortNameLimit) { warnShortName(); }
+        });
     }
     var topicInput = document.getElementById('subject');
     var titlePreview = document.getElementById('osl-topic-title-preview');
