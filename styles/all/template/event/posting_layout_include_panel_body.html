@@ -3,6 +3,58 @@
     <strong>{L_OSL_TEST_CLOCK_WARNING}: {OSL_TEST_CLOCK_DATETIME} (Europe/Warsaw)</strong>
 </div>
 <!-- ENDIF -->
+<!-- IF S_OSL_CAN_CREATE_LEAGUE or S_OSL_CAN_SUBMIT_RESULT -->
+<script>
+// Shared OSL warning: immediate, non-modal and independent of native browser bubbles.
+var oslShowWarning = (function () {
+    var popup, popupTimer, anchor;
+    function hideWarning() {
+        window.clearTimeout(popupTimer);
+        if (popup) {
+            popup.hidden = true;
+            popup.textContent = '';
+        }
+        anchor = null;
+    }
+    function positionWarning() {
+        if (!anchor || !popup || popup.hidden) { return; }
+        if (!anchor.getClientRects().length) { hideWarning(); return; }
+        var rect = anchor.getBoundingClientRect();
+        var width = document.documentElement.clientWidth;
+        var height = document.documentElement.clientHeight;
+        if (rect.bottom < 0 || rect.top > height || rect.right < 0 || rect.left > width) {
+            hideWarning();
+            return;
+        }
+        var left = Math.max(8, Math.min(rect.left, width - popup.offsetWidth - 8));
+        var top = rect.bottom + 7;
+        var above = top + popup.offsetHeight > height - 8;
+        if (above) { top = Math.max(8, rect.top - popup.offsetHeight - 7); }
+        popup.classList.toggle('osl-score-warning-above', above);
+        popup.style.left = left + 'px';
+        popup.style.top = top + 'px';
+    }
+    window.addEventListener('resize', positionWarning);
+    window.addEventListener('scroll', positionWarning, true);
+    return function (input, message) {
+        if (!popup) {
+            popup = document.createElement('div');
+            popup.className = 'osl-score-warning';
+            popup.setAttribute('role', 'alert');
+            popup.hidden = true;
+            document.body.appendChild(popup);
+        }
+        window.clearTimeout(popupTimer);
+        anchor = input;
+        popup.textContent = message;
+        popup.hidden = false;
+        positionWarning();
+        if (anchor) { popupTimer = window.setTimeout(hideWarning, 5000); }
+    };
+})();
+</script>
+<!-- ENDIF -->
+
 <!-- IF S_OSL_CAN_CREATE_LEAGUE -->
 <div class="panel bg3" id="osl-league-panel">
     <div class="inner">
@@ -142,35 +194,27 @@
 document.addEventListener('DOMContentLoaded', function () {
     var checkbox = document.getElementById('osl_enabled');
     var settings = document.getElementById('osl-league-settings');
-    // Reject out-of-range input immediately, preserving the native validation bubble.
+    // Reject out-of-range input immediately with the shared OSL warning.
     var durationInput = document.getElementById('osl_duration_months');
     var bestInput = document.getElementById('osl_best_rounds');
     var bestRange = document.getElementById('osl-best-range');
     var extensionInput = document.getElementById('osl_extension_days');
     if (durationInput && bestInput && extensionInput && checkbox) {
         var wholeNumberMessage = '{LA_OSL_ERR_WHOLE_NUMBER}';
+        var invalidNumberMessage = '{LA_OSL_SCORE_VALUE_NOT_ALLOWED}';
         function boundedInteger(input, fallback, onAccepted) {
             var lastValid;
-            var warningTimer;
-            function clearWarning() {
-                window.clearTimeout(warningTimer);
-                input.setCustomValidity('');
-            }
             function setValue(value) {
-                clearWarning();
                 lastValid = Math.max(Number(input.min), Math.min(Number(input.max), value));
                 input.value = String(lastValid);
             }
             function reject(message) {
                 setValue(lastValid);
-                input.setCustomValidity(message || wholeNumberMessage);
-                input.reportValidity();
-                warningTimer = window.setTimeout(clearWarning, 2500);
+                oslShowWarning(input, message || wholeNumberMessage);
             }
             var initial = input.valueAsNumber;
             setValue(Number.isInteger(initial) ? initial : fallback);
             input.addEventListener('keydown', function (event) {
-                clearWarning();
                 if (!event.ctrlKey && !event.metaKey && !event.altKey && !event.isComposing &&
                     event.key.length === 1 && !/^[0-9]$/.test(event.key)) {
                     event.preventDefault();
@@ -191,7 +235,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
             input.addEventListener('input', function () {
-                clearWarning();
                 if (input.validity.badInput) {
                     reject(wholeNumberMessage);
                 } else if (input.value === '') {
@@ -200,7 +243,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else if (!/^[0-9]+$/.test(input.value)) {
                     reject(wholeNumberMessage);
                 } else if (!input.validity.valid) {
-                    reject(input.validationMessage);
+                    var rejected = input.value;
+                    reject(invalidNumberMessage.replace('%s', function () { return rejected; }));
                 } else {
                     lastValid = input.valueAsNumber;
                     if (onAccepted) { onAccepted(lastValid); }
@@ -208,15 +252,9 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             function finishEditing() {
                 if (input.value === '') { setValue(lastValid); }
-                clearWarning();
             }
             input.addEventListener('change', finishEditing);
             input.addEventListener('blur', finishEditing);
-            if (input.form) {
-                // Do not block a valid restored value when the user submits the form.
-                input.form.addEventListener('pointerdown', clearWarning, true);
-                input.form.addEventListener('keydown', clearWarning, true);
-            }
             return { setValue: setValue };
         }
         function updateBestLimit(months) {
@@ -234,7 +272,6 @@ document.addEventListener('DOMContentLoaded', function () {
             [durationInput, bestInput, extensionInput].forEach(function (input) {
                 input.disabled = !checkbox.checked;
                 input.required = checkbox.checked;
-                if (input.disabled) { input.setCustomValidity(''); }
             });
         }
         checkbox.addEventListener('change', toggleNumberFields);
@@ -459,36 +496,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var invalidScoreMessage = document.getElementById('osl-result-panel').dataset.invalidScoreMessage;
-    var popup = document.createElement('div');
-    popup.className = 'osl-score-warning';
-    popup.setAttribute('role', 'alert');
-    popup.hidden = true;
-    document.body.appendChild(popup);
-    var popupTimer;
-
-    function hideWarning() {
-        window.clearTimeout(popupTimer);
-        popup.hidden = true;
-        popup.textContent = '';
-    }
-
-    function showWarning(input, message) {
-        hideWarning();
-        popup.textContent = message;
-        popup.hidden = false;
-        var rect = input.getBoundingClientRect();
-        var left = Math.max(8, Math.min(rect.left, document.documentElement.clientWidth - popup.offsetWidth - 8));
-        var top = rect.bottom + 7;
-        var above = top + popup.offsetHeight > document.documentElement.clientHeight - 8;
-        if (above) { top = Math.max(8, rect.top - popup.offsetHeight - 7); }
-        popup.classList.toggle('osl-score-warning-above', above);
-        popup.style.left = left + 'px';
-        popup.style.top = top + 'px';
-        popupTimer = window.setTimeout(hideWarning, 3500);
-    }
-
-    window.addEventListener('resize', hideWarning);
-    window.addEventListener('scroll', hideWarning, true);
+    var showWarning = oslShowWarning;
     // Count Unicode characters rather than UTF-16 code units. A native
     // maxlength would silently truncate paste and hide the rejected edit.
     var groupInput = document.getElementById('osl_shooter_group');
