@@ -788,15 +788,34 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
         if (dateInput) {
-            dateInput.addEventListener('change', function () {
-                if (dateInput.value && dateInput.max && dateInput.value > dateInput.max) {
-                    var future = dateInput.value > comp.dataset.today;
-                    dateInput.value = '';
-                    showWarning(dateInput, future ? dateInput.dataset.futureMessage : dateInput.dataset.rangeMessage);
-                } else if (dateInput.value && dateInput.min && dateInput.value < dateInput.min) {
-                    dateInput.value = '';
-                    showWarning(dateInput, dateInput.dataset.rangeMessage);
+            // A native date field fires change while individual day/month/year
+            // segments are edited. Do not clear or replace an intermediate date.
+            function dateWarningMessage() {
+                if (dateInput.value && dateInput.value > comp.dataset.today) {
+                    return dateInput.dataset.futureMessage;
                 }
+                if (dateInput.value &&
+                    ((dateInput.min && dateInput.value < dateInput.min) ||
+                     (dateInput.max && dateInput.value > dateInput.max))) {
+                    return dateInput.dataset.rangeMessage;
+                }
+                if (dateInput.validity.badInput) {
+                    return dateInput.validationMessage;
+                }
+                return '';
+            }
+            dateInput.addEventListener('blur', function () {
+                if (!resultToggle.checked || resultToggle.disabled) { return; }
+                var message = dateWarningMessage();
+                if (message) { showWarning(dateInput, message); }
+            });
+            dateInput.addEventListener('invalid', function (event) {
+                if (!resultToggle.checked || resultToggle.disabled) { return; }
+                // Keep the invalid date visible for correction and let native
+                // constraints prevent submission; use the shared OSL popup.
+                event.preventDefault();
+                dateInput.focus();
+                showWarning(dateInput, dateWarningMessage() || dateInput.validationMessage);
             });
         }
         resultToggle.addEventListener('change', function () { updatePeriod(false); });
