@@ -483,7 +483,7 @@ document.addEventListener('DOMContentLoaded', function () {
             </dl>
             <!-- ENDIF -->
             <!-- BEGIN osl_result_competitions -->
-            <div class="osl-result-competition panel bg2<!-- IF osl_result_competitions.REPORTED_THIS_MONTH --> osl-result-reported<!-- ENDIF -->" style="padding:12px;margin:12px 0" data-current-allowed="<!-- IF osl_result_competitions.CURRENT_ALLOWED -->1<!-- ELSE -->0<!-- ENDIF -->" data-previous-allowed="<!-- IF osl_result_competitions.PREVIOUS_ALLOWED -->1<!-- ELSE -->0<!-- ENDIF -->" data-current-from="{osl_result_competitions.CURRENT_START}" data-current-to="{osl_result_competitions.CURRENT_END}" data-previous-from="{osl_result_competitions.PREVIOUS_START}" data-previous-to="{osl_result_competitions.PREVIOUS_END}"<!-- IF osl_result_competitions.REPORTED_THIS_MONTH --> aria-disabled="true"<!-- ENDIF -->>
+            <div class="osl-result-competition panel bg2<!-- IF osl_result_competitions.REPORTED_THIS_MONTH --> osl-result-reported<!-- ENDIF -->" style="padding:12px;margin:12px 0" data-current-allowed="<!-- IF osl_result_competitions.CURRENT_ALLOWED -->1<!-- ELSE -->0<!-- ENDIF -->" data-previous-allowed="<!-- IF osl_result_competitions.PREVIOUS_ALLOWED -->1<!-- ELSE -->0<!-- ENDIF -->" data-current-from="{osl_result_competitions.CURRENT_START}" data-current-to="{osl_result_competitions.CURRENT_END}" data-today="{osl_result_competitions.TODAY}" data-previous-from="{osl_result_competitions.PREVIOUS_START}" data-previous-to="{osl_result_competitions.PREVIOUS_END}"<!-- IF osl_result_competitions.REPORTED_THIS_MONTH --> aria-disabled="true"<!-- ENDIF -->>
                 <h4>{osl_result_competitions.NAME}</h4>
                 <!-- IF osl_result_competitions.REPORTED_THIS_MONTH -->
                 <label class="osl-result-reported-toggle">
@@ -505,7 +505,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="osl-result-fields"<!-- IF not osl_result_competitions.SELECTED --> style="display:none"<!-- ENDIF -->>
                     <dl>
                         <dt><label for="osl_date_{osl_result_competitions.ID}">{L_OSL_RESULT_DATE}</label></dt>
-                        <dd><input class="inputbox autowidth" type="date" id="osl_date_{osl_result_competitions.ID}" name="osl_date[{osl_result_competitions.ID}]" value="{osl_result_competitions.DATE}" min="{osl_result_competitions.DATE_MIN}" max="{osl_result_competitions.DATE_MAX}" /></dd>
+                        <dd><input class="inputbox autowidth" type="date" id="osl_date_{osl_result_competitions.ID}" name="osl_date[{osl_result_competitions.ID}]" value="{osl_result_competitions.DATE}" min="{osl_result_competitions.DATE_MIN}" max="{osl_result_competitions.DATE_MAX}" data-future-message="{L_OSL_ERR_FUTURE_DATE}" data-range-message="{L_OSL_ERR_DATE_OUT_OF_RANGE}" /></dd>
                     </dl>
                     <!-- BEGIN osl_result_competitions.fields -->
                     <dl>
@@ -781,11 +781,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 var from = comp.dataset[previous ? 'previousFrom' : 'currentFrom'];
                 var to = comp.dataset[previous ? 'previousTo' : 'currentTo'];
                 dateInput.min = from || '';
-                dateInput.max = to || '';
+                dateInput.max = to || comp.dataset.today;
                 if (changeDate && from && to && (!dateInput.value || dateInput.value < from || dateInput.value > to)) {
                     dateInput.value = previous ? to : from;
                 }
             }
+        }
+        if (dateInput) {
+            dateInput.addEventListener('change', function () {
+                if (dateInput.value && dateInput.max && dateInput.value > dateInput.max) {
+                    var future = dateInput.value > comp.dataset.today;
+                    dateInput.value = '';
+                    showWarning(dateInput, future ? dateInput.dataset.futureMessage : dateInput.dataset.rangeMessage);
+                } else if (dateInput.value && dateInput.min && dateInput.value < dateInput.min) {
+                    dateInput.value = '';
+                    showWarning(dateInput, dateInput.dataset.rangeMessage);
+                }
+            });
         }
         resultToggle.addEventListener('change', function () { updatePeriod(false); });
         if (previousToggle) {
