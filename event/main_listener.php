@@ -642,6 +642,11 @@ class main_listener implements EventSubscriberInterface
                 {
                     $errors[] = $this->language->lang('OSL_ERR_LIMITS');
                 }
+                $short_name = $this->request->untrimmed_variable('osl_short_name', '', true);
+                if (utf8_strlen(html_entity_decode($short_name, ENT_QUOTES, 'UTF-8')) > 20)
+                {
+                    $errors[] = $this->language->lang('OSL_ERR_SHORT_NAME_LENGTH');
+                }
                 if (utf8_strlen($this->request->untrimmed_variable('osl_reply_instructions', '', true)) > 10000)
                 {
                     $errors[] = $this->language->lang('OSL_ERR_REPLY_INSTRUCTIONS_LENGTH');

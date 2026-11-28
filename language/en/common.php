@@ -40,6 +40,7 @@ $lang = array_merge($lang, [
 	'OSL_SUBJECT_REQUIRED_HINT' => 'Enter the post subject',
 	'OSL_REGULATIONS_REMINDER' => 'Do not forget to include the league rules or a link to them in the post above',
 	'OSL_SHORT_NAME'           => 'Short league name',
+	'OSL_ERR_SHORT_NAME_LENGTH' => 'The short league name cannot exceed 20 characters.',
 	'OSL_START_DATE'           => 'League start (month and year)',
 	'OSL_DURATION_MONTHS'      => 'Duration (months)',
 	'OSL_EXTENSION_DAYS' => 'Extend the round by (days)',
